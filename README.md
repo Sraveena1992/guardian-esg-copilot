@@ -1,3 +1,6 @@
+## 🔴 LIVE DEMO: https://guardian-esg-copilot.onrender.com/
+## 📹 Demo Video: Fail-Closed + Moss Retrieval Working
+
 # GUARDIAN — Real-Time AI Agent Security & Reliability Gateway
 
 > Security shouldn't slow an AI agent down.
