@@ -2,7 +2,7 @@
 
 **Live Demo:** https://guardian-esg-copilot.onrender.com
 
-**Live Proof:** 7ms MOSS Retrieval — CONNECTED | MOSS_ENFORCED: true | AUDIT: 380c7f73a2062396
+**Live Proof:** 7ms MOSS Retrieval — CONNECTED | MOSS_ENFORCED: true | AUDIT: f09b9e1a35c68f32
 
 **Status:** Live Verified — 7ms MOSS Retrieval Observed
 
@@ -52,7 +52,7 @@ Audit & Observability
 
 4. **Audit & Observability**
    - Every security decision creates an audit record.
-   - Example audit ID: `380c7f73a2062396`
+   - Example audit ID: `f09b9e1a35c68f32``
 
 5. **Evaluation & Observability**
    - Decision, risk, matched policy, tool, latency, and audit information are exposed for evaluation and review.
@@ -64,12 +64,14 @@ Audit & Observability
 - BLOCK prevents tool execution.
 - Unavailable policy retrieval or insufficient confidence must not silently allow protected actions.
 
-### Live Application Reports
+### Live Proof
 
 - Live application: https://guardian-esg-copilot.onrender.com
 - **MOSS Retrieval: 7ms — live observed**
 - **MOSS_ENFORCED: true**
 - **MOSS: CONNECTED**
+- **Risk policy:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
+- **Audit:** `f09b9e1a35c68f32`
 
 ### How to Run
 
