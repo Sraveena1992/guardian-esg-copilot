@@ -1,31 +1,45 @@
-# guardian-esg-copilot
-GUARDIAN - Real-time ESG Compliance Guard - 8ms Moss + 6ms Lyzr
-# GUARDIAN - Real-time ESG Compliance Guard
+# GUARDIAN — Real-Time AI Agent Security & Reliability Gateway
 
-> **#1 READY | 8ms Moss JS + 6ms Lyzr | $0.0008/calc | 99.95% EPA Accuracy**
+> Security shouldn't slow an AI agent down.
 
-## 🚀 Live Performance Metrics
-- **Moss Retrieval:** 8ms p50 / <10ms p99
-- **Lyzr Eval:** 6ms p50 / <8ms p99
-- **Cost:** $0.0008 per calculation
-- **Accuracy:** 99.95% EPA verified
-- **Audit:** AIMS SHA256 + Deterministic Formula
+GUARDIAN is a real-time security and reliability gateway for AI agents.
 
-## 🛡️ What GUARDIAN Does
-- Monitors GreenLedger calculations 24/7
-- Real-time ESG Compliance Guard
-- Anti-greenwashing auto-block
-- Pre-audit failure detection
-- Real-time compliance alerts
+Before an agent executes a tool or sensitive action, GUARDIAN retrieves the relevant security policy using Moss, evaluates the request against risk and permission signals, and produces a deterministic decision:
 
-## 🧩 Architecture
-- **Agent:** `agents/guardian-agent/agent.js`
-- **Backend:** `backend/guardian.py` - GuardianComplianceGuard class
-- **Stack:** Lyzr Agent + Moss JS + AIMS Audit
+ALLOW • REVIEW • BLOCK
 
-## ⚡ Why #1?
-GUARDIAN is NOT just a tracker - it's a COMPLIANCE GUARD that prevents audit failures BEFORE they happen. 8ms + 6ms = 14ms total guard latency at $0.0008 cost.
+Every decision is explainable and auditable.
 
-## 🔗 Live Demo
-Repository: Sraveena1992/guardian-esg-copilot
-Performance: Tested p50/p99 - #1 READY
+## Core Flow
+
+Agent Request
+→ Moss Policy Retrieval
+→ Security & Risk Evaluation
+→ Decision Engine
+→ ALLOW / REVIEW / BLOCK
+→ Tool Execution
+
+High-risk or low-confidence actions are routed to REVIEW instead of being executed automatically.
+
+## Why Moss
+
+Moss is used as the semantic retrieval layer for retrieving the most relevant policies and security rules in the real-time decision path.
+
+The target is sub-10ms policy retrieval; benchmark results will be reported only after measurement.
+
+## Reliability & Security
+
+- Prompt-injection risk detection
+- Sensitive-data risk detection
+- Agent/tool permission checks
+- Policy-based decisions
+- Human review for uncertain actions
+- Explainable decisions
+- Tamper-aware audit trail
+- Asynchronous evaluation and observability
+
+## Status
+
+Competition MVP under active development.
+
+Performance figures are measured experimentally and will not be presented as verified until benchmarked.
