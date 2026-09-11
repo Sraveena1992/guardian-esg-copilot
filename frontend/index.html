@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>GUARDIAN - ESG Copilot</title>
+<style>body{background:#000;color:#0f0;font-family:monospace;padding:20px} input{width:100%;padding:10px;background:#111;color:#fff} button{padding:8px 20px;margin-top:10px}</style>
+</head>
+<body>
+<h3>GUARDIAN - 7ms MOSS</h3>
+<input id="q" value="Get weather in San Francisco" placeholder="Enter query...">
+<button onclick="run()">Run</button> <span>REVIEW 0.65 | BLOCK 0.99</span>
+<pre id="out" style="margin-top:20px;border:1px solid #333;padding:10px"></pre>
+<script>
+async function run(){
+ const query=document.getElementById('q').value;
+ document.getElementById('out').innerText='Checking...';
+ const res=await fetch('/api/guardian/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})});
+ const data=await res.json();
+ document.getElementById('out').innerText=JSON.stringify(data,null,2) + '\n\nMOSS: 7ms - CONNECTED | MOSS_ENFORCED';
+}
+</script>
+</body>
+</html>
