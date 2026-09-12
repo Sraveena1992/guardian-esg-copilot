@@ -1,5 +1,13 @@
 # GUARDIAN — ESG Copilot | Zero-Trust Security Gateway
 
+## 🎥 Final Submission — Live Demo & Verification
+
+**Final Demo Video:** https://www.loom.com/share/43fa02a0e7ee4b0cabfe9bea90a08c73
+**GitHub:** Sraveena1992/guardian-esg-copilot
+
+**Verification:**
+MOSS: guardian_esg_policies - EPA GHG 40 CFR Part 98, Financial Fraud, Prompt Injection Defense | 7ms CONNECTED | MOSS_ENFORCED | Lyzr AIMS Audit
+
 **Live Demo:** https://guardian-esg-copilot.onrender.com
 
 **Live Proof:** 7ms MOSS Retrieval — CONNECTED | MOSS_ENFORCED: true | AUDIT: f09b9e1a35c68f32
