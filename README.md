@@ -1,12 +1,12 @@
-# GUARDIAN — ESG Copilot | Zero-Trust Security Gateway
+# GUARDIAN — ESG Copilot | AI Safety Copilot
 
 ## 🎥 Final Submission — Live Demo & Verification
 
-### 🎥 Final Demo (1m 50s Verified): https://www.loom.com/share/70576023c4754abb80fbfd12d5ed01ae
+### 🎥 Final Demo (1m 50s): https://www.loom.com/share/70576023c4754abb80fbfd12d5ed01ae
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
 **Verification:**
-MOSS: guardian_esg_policies - EPA GHG 40 CFR Part 98, Financial Fraud, Prompt Injection Defense | 7ms CONNECTED | MOSS_ENFORCED | Lyzr AIMS Audit
+MOSS: guardian_esg_policies — EPA GHG 40 CFR Part 98, Financial Fraud, Prompt Injection Defense | 7ms CONNECTED | MOSS_ENFORCED
 
 **Live Demo:** https://guardian-esg-copilot.onrender.com
 
@@ -16,29 +16,24 @@ MOSS: guardian_esg_policies - EPA GHG 40 CFR Part 98, Financial Fraud, Prompt In
 
 ### What is GUARDIAN?
 
-GUARDIAN is a zero-trust security gateway for AI agents. Before a protected tool executes, GUARDIAN retrieves relevant security policy, evaluates risk, and deterministically returns ALLOW / REVIEW / BLOCK.
+“GUARDIAN is an ESG AI safety copilot that retrieves relevant policy context through MOSS and produces explicit risk outcomes: ALLOW, REVIEW, and BLOCK.”
 
 ### Architecture
 
-```text
 User
 ↓
 Guardian ESG Copilot
 ↓
-MOSS Semantic Retrieval — 7ms live observed
+FastAPI Request Entry Point
 ↓
-Security / Risk Evaluation
+MOSS Policy Retrieval — 7ms observed
 ↓
-Deterministic Decision Engine
-├── ALLOW → Zero-Trust Tool Gateway
-│   ├── Weather API
-│   ├── SEC Filing API
-│   └── Secret Scan
-├── REVIEW → Human Approval
-└── BLOCK → Execution Denied
+Risk Evaluation
+├── 0.05 → ALLOW
+├── 0.65 → REVIEW
+└── 0.99 → BLOCK
 ↓
-Audit & Observability
-```
+Audit Identifier Generated
 
 ### Core Features
 
@@ -48,31 +43,21 @@ Audit & Observability
    - MOSS_ENFORCED: true.
    - 7ms is reported as an observed live retrieval result, not as a p50/p95/p99 benchmark.
 
-2. **Zero-Trust Tool Action Gateway**
-   - Protected tools cannot execute without an authorization decision.
-   - Weather API → environmental/weather data
-   - SEC Filing API → regulatory filing retrieval
-   - Secret Scan → credential and secret detection
 
-3. **Risk-Based Decision Engine**
+
+2. **Risk-Based Decision Engine**
    - Risk 0.05 → ALLOW
    - Risk 0.65 → REVIEW
    - Risk 0.99 → BLOCK
-   - Low-confidence or unavailable-policy conditions must never silently grant protected tool access.
+   
 
-4. **Audit & Observability**
-   - Every security decision creates an audit record.
+3. **Audit & Observability**
+   - “An audit identifier is generated for the demonstrated transaction.”
    - Example audit ID: `f09b9e1a35c68f32`
 
-5. **Evaluation & Observability**
-   - Decision, risk, matched policy, tool, latency, and audit information are exposed for evaluation and review.
 
-### Security Policy
 
-- Protected tools are enforced through the Tool Action Gateway.
-- REVIEW requires human approval.
-- BLOCK prevents tool execution.
-- Unavailable policy retrieval or insufficient confidence must not silently allow protected actions.
+
 
 ### Live Proof
 
@@ -82,8 +67,7 @@ Audit & Observability
 - **MOSS: CONNECTED**
 - **Risk policy:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
 - **Audit:** `f09b9e1a35c68f32`
-### Fail-Closed Logic
-If MOSS unreachable → system defaults to BLOCK (not ALLOW). Fail-closed enforced with immutable audit log via Lyzr AIMS. Timeout 5s.
+
 ### How to Run
 
 ```bash
