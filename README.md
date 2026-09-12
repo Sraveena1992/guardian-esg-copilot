@@ -12,6 +12,7 @@ GUARDIAN is a zero-trust security gateway for AI agents. Before a protected tool
 
 ### Architecture
 
+```text
 User
 ↓
 Guardian ESG Copilot
@@ -29,6 +30,7 @@ Deterministic Decision Engine
 └── BLOCK → Execution Denied
 ↓
 Audit & Observability
+```
 
 ### Core Features
 
@@ -52,7 +54,7 @@ Audit & Observability
 
 4. **Audit & Observability**
    - Every security decision creates an audit record.
-   - Example audit ID: `f09b9e1a35c68f32``
+   - Example audit ID: `f09b9e1a35c68f32`
 
 5. **Evaluation & Observability**
    - Decision, risk, matched policy, tool, latency, and audit information are exposed for evaluation and review.
@@ -76,5 +78,18 @@ Audit & Observability
 ### How to Run
 
 ```bash
-npm install
-npm run dev
+pip install -r requirements.txt
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+### Environment Variables
+
+Create a `.env` file with:
+
+```env
+MOSS_PROJECT_ID=your_moss_project_id
+MOSS_PROJECT_KEY=your_moss_project_key
+MOSS_INDEX_NAME=guardian-security-policies
+```
+
+Never commit real credentials or secrets to GitHub.
