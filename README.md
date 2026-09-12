@@ -82,7 +82,8 @@ Audit & Observability
 - **MOSS: CONNECTED**
 - **Risk policy:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
 - **Audit:** `f09b9e1a35c68f32`
-
+### Fail-Closed Logic
+If MOSS unreachable → system defaults to BLOCK (not ALLOW). Fail-closed enforced with immutable audit log via Lyzr AIMS. Timeout 5s.
 ### How to Run
 
 ```bash
