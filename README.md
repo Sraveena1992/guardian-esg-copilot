@@ -2,7 +2,7 @@
 
 ## 🎥 Final Submission — Live Demo & Verification
 
-### 🎥 Final Demo (67 sec): : https://www.loom.com/share/9d2246c31a2842a4b55039a6e3d6ae10
+### 🎥 Final Demo (67 sec): https://www.loom.com/share/9d2246c31a2842a4b55039a6e3d6ae10
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
 **Verification:**
