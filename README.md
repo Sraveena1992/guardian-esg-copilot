@@ -45,15 +45,15 @@ Audit Identifier Generated
 
 
 
-2. **Risk-Based Decision Engine**
-   - Risk 0.05 → ALLOW
-   - Risk 0.65 → REVIEW
-   - Risk 0.99 → BLOCK
+2. **Deterministic Risk Decisioning**
+  - Demonstrated low-risk outcome: 0.05 → ALLOW
+  - Demonstrated medium-risk outcome: 0.65 → REVIEW
+  - Demonstrated high-risk outcome: 0.99 → BLOCK
    
 
-3. **Audit & Observability**
-   - “An audit identifier is generated for the demonstrated transaction.”
-   - Example audit ID: `f09b9e1a35c68f32`
+3. **Audit Identifier Generation**
+  - A unique audit identifier (UUID) is generated and returned for each policy evaluation request.
+  - Example audit ID: `f09b9e1a35c68f32`
 
 
 
