@@ -2,7 +2,7 @@
 
 ## 🎥 Final Submission — Live Demo & Verification
 
-### 🎥 Final Demo (1m 50s): https://www.loom.com/share/70576023c4754abb80fbfd12d5ed01ae
+### 🎥 Final Demo (67 sec): : https://www.loom.com/share/9d2246c31a2842a4b55039a6e3d6ae10
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
 **Verification:**
@@ -46,9 +46,9 @@ Audit Identifier Generated
 
 
 2. **Deterministic Risk Decisioning**
-  - Demonstrated low-risk outcome: 0.05 → ALLOW
-  - Demonstrated medium-risk outcome: 0.65 → REVIEW
-  - Demonstrated high-risk outcome: 0.99 → BLOCK
+  - Demonstrated mapping: 0.05 → ALLOW
+  - Demonstrated mapping: 0.65 → REVIEW
+  - Demonstrated mapping: 0.99 → BLOCK
    
 
 3. **Audit Identifier Generation**
