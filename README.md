@@ -56,7 +56,27 @@ Audit Identifier Generated
   - Example audit ID: `f09b9e1a35c68f32`
 
 
+### How MOSS Drives the Decision
 
+Guardian uses MOSS to retrieve the relevant ESG policy context before deterministic scoring.
+
+The retrieved policy provides parameters such as `strict_score_threshold` and `risk_factor`. These parameters are used by the deterministic scoring logic to calculate the policy evaluation score, which is then mapped to the demonstrated ALLOW, REVIEW, or BLOCK outcome.
+
+Flow:
+
+MOSS Policy Retrieval
+↓
+Retrieved policy parameters
+(`strict_score_threshold`, `risk_factor`)
+↓
+Deterministic score calculation
+↓
+Risk outcome
+ALLOW / REVIEW / BLOCK
+
+This makes MOSS part of the demonstrated decision flow rather than a separate lookup step.
+
+The observed 7ms measurement refers specifically to MOSS policy retrieval and is not an end-to-end latency benchmark.
 
 
 ### Live Proof
