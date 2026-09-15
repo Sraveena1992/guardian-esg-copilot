@@ -296,6 +296,12 @@ def home():
 
             const j = await response.json();
 
+if (!response.ok) {
+    document.getElementById('r').innerHTML =
+        `VALIDATION ERROR: ${j.detail || 'Invalid request'}`;
+    return;
+}
+
             document.getElementById('r').innerHTML =
                 `MOSS: ${j.moss_policy_retrieval}<br>
                  RISK: ${j.risk}<br>
