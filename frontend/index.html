@@ -1,21 +1,185 @@
 <!DOCTYPE html>
 <html>
-<head><title>GUARDIAN - ESG Copilot</title>
-<style>body{background:#000;color:#0f0;font-family:monospace;padding:20px} input{width:100%;padding:10px;background:#111;color:#fff} button{padding:8px 20px;margin-top:10px}</style>
+<head>
+  <title>GUARDIAN - ESG Copilot</title>
+
+  <!-- LiveKit browser SDK -->
+  <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
+
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 8px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #333;
+    }
+
+    #out {
+      margin-top: 20px;
+      border: 1px solid #333;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
+
 <body>
+
 <h3>GUARDIAN - 7ms MOSS</h3>
-<input id="q" value="Get weather in San Francisco" placeholder="Enter query...">
-<button onclick="run()">Run</button> <span>REVIEW 0.65 | BLOCK 0.99</span>
-<pre id="out" style="margin-top:20px;border:1px solid #333;padding:10px"></pre>
+
+<div id="status">
+  LiveKit: CONNECTING...
+</div>
+
+<input
+  id="q"
+  value="Get weather in San Francisco"
+  placeholder="Enter query..."
+>
+
+<button onclick="run()">Run</button>
+
+<span> REVIEW 0.65 | BLOCK 0.99 </span>
+
+<pre id="out"></pre>
+
 <script>
-async function run(){
- const query=document.getElementById('q').value;
- document.getElementById('out').innerText='Checking...';
- const res=await fetch('/api/guardian/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})});
- const data=await res.json();
- document.getElementById('out').innerText=JSON.stringify(data,null,2) + '\n\nMOSS: 7ms - CONNECTED | MOSS_ENFORCED';
+const LIVEKIT_TOKEN_SERVER_ID = "guardianesgcopilot-1v2q23";
+const LIVEKIT_ROOM = "guardian-esg-demo";
+
+let room = null;
+
+async function connectLiveKit() {
+  try {
+    const tokenSource =
+      LivekitClient.TokenSource.developmentTokenServer(
+        LIVEKIT_TOKEN_SERVER_ID
+      );
+
+    const connection =
+      await tokenSource.fetch({
+        roomName: LIVEKIT_ROOM
+      });
+
+    room = new LivekitClient.Room();
+
+    await room.connect(
+      connection.serverUrl,
+      connection.participantToken
+    );
+
+    document.getElementById("status").innerText =
+      "LiveKit: CONNECTED | Room: " + LIVEKIT_ROOM;
+
+    console.log("LiveKit connected:", LIVEKIT_ROOM);
+
+  } catch (error) {
+    console.error("LiveKit connection failed:", error);
+
+    document.getElementById("status").innerText =
+      "LiveKit: CONNECTION FAILED";
+  }
 }
+
+async function publishGuardianDecision(data) {
+  if (!room || !room.localParticipant) {
+    return;
+  }
+
+  const message = JSON.stringify({
+    source: "GUARDIAN",
+    moss: "MOSS_ENFORCED",
+    decision: data.decision,
+    risk_score: data.risk_score,
+    audit: data.audit,
+    timestamp: data.timestamp
+  });
+
+  const encoder = new TextEncoder();
+
+  await room.localParticipant.publishData(
+    encoder.encode(message),
+    {
+      reliable: true,
+      topic: "guardian-decision"
+    }
+  );
+
+  console.log("Guardian decision published to LiveKit:", message);
+}
+
+async function run() {
+  const query =
+    document.getElementById("q").value.trim();
+
+  const output =
+    document.getElementById("out");
+
+  if (!query) {
+    output.innerText = "Query cannot be empty.";
+    return;
+  }
+
+  output.innerText =
+    "Checking Guardian + MOSS...";
+
+  try {
+    const res = await fetch(
+      "/api/guardian/check",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: query
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    output.innerText =
+      JSON.stringify(data, null, 2) +
+      "\n\nMOSS: 7ms - CONNECTED" +
+      "\nMOSS_ENFORCED" +
+      "\nLiveKit: " +
+      (room ? "CONNECTED" : "NOT CONNECTED");
+
+    await publishGuardianDecision(data);
+
+  } catch (error) {
+    console.error(error);
+
+    output.innerText =
+      "Guardian request failed:\n" +
+      error.message;
+  }
+}
+
+connectLiveKit();
 </script>
+
 </body>
 </html>
