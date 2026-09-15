@@ -313,8 +313,16 @@ def home():
 
 
 @app.post("/check")
-def c(d: dict):
-    return check_guardian(d.get("query", ""))
+def c(request: GuardianRequest):
+    query = request.query.strip()
+
+    if not query:
+        raise HTTPException(
+            status_code=400,
+            detail="Query cannot be empty."
+        )
+
+    return check_guardian(query)
 
 
 @app.get("/health")
