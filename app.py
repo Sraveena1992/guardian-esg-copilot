@@ -298,7 +298,7 @@ def home():
 
 if (!response.ok) {
     document.getElementById('r').innerHTML =
-        `VALIDATION ERROR: ${j.detail || 'Invalid request'}`;
+        `VALIDATION ERROR: ${typeof j.detail === 'string' ? j.detail : 'Query cannot be empty or is invalid.'}`;
     return;
 }
 
