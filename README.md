@@ -1,4 +1,4 @@
-# GUARDIAN — ESG Copilot | AI Safety Copilot
+# GUARDIAN — ESG Copilot | Zero-Trust Security Gateway
 
 ## 🎥 Final Submission — Live Demo & Verification
 
@@ -46,13 +46,17 @@ Audit Identifier Generated
 
 
 2. **Deterministic Risk Decisioning**
+  - ALLOW triggers a controlled local Weather API mock execution.
+  - REVIEW remains pending human approval with execution disabled.
+  - BLOCK prevents execution.
   - Demonstrated mapping: 0.05 → ALLOW
   - Demonstrated mapping: 0.65 → REVIEW
   - Demonstrated mapping: 0.99 → BLOCK
+
    
 
 3. **Audit Identifier Generation**
-  - A unique audit identifier (UUID) is generated and returned for each policy evaluation request.
+  - A unique audit identifier is generated and returned for each policy evaluation request.
   - Example audit ID: `f09b9e1a35c68f32`
 
 
@@ -74,9 +78,7 @@ Deterministic score calculation
 Risk outcome
 ALLOW / REVIEW / BLOCK
 
-This makes MOSS part of the demonstrated decision flow rather than a separate lookup step.
-
-The observed 7ms measurement refers specifically to MOSS policy retrieval and is not an end-to-end latency benchmark.
+MOSS is demonstrated as the policy-context retrieval layer preceding Guardian's deterministic risk evaluation. The observed 7ms measurement refers specifically to MOSS policy retrieval and is not an end-to-end latency benchmark.
 
 
 ### Live Proof
@@ -85,7 +87,7 @@ The observed 7ms measurement refers specifically to MOSS policy retrieval and is
 - **MOSS Retrieval: 7ms — live observed**
 - **MOSS_ENFORCED: true**
 - **MOSS: CONNECTED**
-- **Risk policy:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
+- **Risk mapping:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
 - **Audit:** `f09b9e1a35c68f32`
 
 ### How to Run
