@@ -1,6 +1,7 @@
 import os
 import time
 import hashlib
+from collections import defaultdict
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -8,6 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
+
+RATE_LIMIT = 30
+RATE_WINDOW = 60
+request_log = defaultdict(list)
 
 app.add_middleware(
     CORSMiddleware,
@@ -319,6 +324,23 @@ if (!response.ok) {
 
 @app.post("/check")
 def c(request: GuardianRequest):
+    client_ip = request.scope.get("client")
+    ip = client_ip[0] if client_ip else "unknown"
+
+    now = time.time()
+    request_log[ip] = [
+        t for t in request_log[ip]
+        if now - t < RATE_WINDOW
+    ]
+
+    if len(request_log[ip]) >= RATE_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later."
+        )
+
+    request_log[ip].append(now)
+
     query = request.query.strip()
 
     if not query:
