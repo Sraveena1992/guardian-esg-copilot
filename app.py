@@ -1,4 +1,3 @@
-```python
 from fastapi import FastAPI, HTTPException, Request
 import os
 import time
@@ -1008,10 +1007,8 @@ def get_audit():
 
 @app.get("/health")
 def health():
-
     return {
         "ok": True,
         "latency_ms": 7,
-        "security_mode": "FAIL_CLOSED",
+        "security_mode": "FAIL_CLOSED"
     }
-```
