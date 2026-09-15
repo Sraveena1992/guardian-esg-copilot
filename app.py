@@ -1,9 +1,9 @@
+from fastapi import FastAPI, HTTPException, Request
 import os
 import time
 import hashlib
 from collections import defaultdict
 
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -325,7 +325,7 @@ document.getElementById('blockBtn').onclick = function () {
 
 
 @app.post("/check")
-def c(request: GuardianRequest):
+def c(request: Request, payload: GuardianRequest):
     client_ip = request.scope.get("client")
     ip = client_ip[0] if client_ip else "unknown"
 
@@ -343,7 +343,7 @@ def c(request: GuardianRequest):
 
     request_log[ip].append(now)
 
-    query = request.query.strip()
+    query = payload.query.strip()
 
     if not query:
         raise HTTPException(
