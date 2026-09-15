@@ -235,6 +235,17 @@ def fail_closed_response(query, reason):
 
 
 # =========================================================
+# =========================================================
+# CONTROLLED MOCK TOOL EXECUTION
+# =========================================================
+
+def execute_weather_mock(query):
+    return {
+        "status": "SUCCESS",
+        "tool": "Weather API (controlled mock)",
+        "result": "San Francisco weather request simulated successfully"
+    }
+
 # GUARDIAN DECISION ENGINE
 # =========================================================
 
@@ -298,6 +309,8 @@ def check_guardian(query):
         ]
     ):
 
+       
+
         decision = {
             "risk":
                 "0.99 - BLOCK",
@@ -356,6 +369,8 @@ def check_guardian(query):
 
     else:
 
+        mock_result = execute_weather_mock(q)
+
         decision = {
             "risk":
                 "0.05 - ALLOW",
@@ -368,12 +383,15 @@ def check_guardian(query):
 
             "tool_execution":
                 (
-                    "ALLOWED - Weather API "
-                    "(gateway decision)"
+                    "EXECUTED - Weather API "
+                    "(controlled mock)"
                 ),
 
+            "execution_result":
+                mock_result,
+
             "executed":
-                False,
+                True,
 
             "reason":
                 "Approved low-risk request",
