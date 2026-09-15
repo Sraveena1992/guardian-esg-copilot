@@ -17,6 +17,9 @@ app.add_middleware(
 )
 )
 
+class GuardianRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=2000)
+
 KB = (
     "guardian_esg_policies - EPA GHG 40 CFR Part 98, "
     "Financial Fraud Prevention, Prompt Injection Defense, Secrets Management"
