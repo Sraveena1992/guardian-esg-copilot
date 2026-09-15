@@ -182,8 +182,8 @@ def check_guardian(query):
             "risk": "0.05 - ALLOW",
             "risk_score": 0.05,
             "decision": "ALLOW",
-            "tool_execution": "ALLOWED - Weather API",
-            "executed": True,
+            "tool_execution": "ALLOWED - Weather API (gateway decision)",
+            "executed": False,
             "reason": "Approved low-risk request",
         }
 
