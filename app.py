@@ -15,7 +15,6 @@ app.add_middleware(
     allow_methods=["POST", "GET"],
     allow_headers=["Content-Type"],
 )
-)
 
 class GuardianRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=2000)
