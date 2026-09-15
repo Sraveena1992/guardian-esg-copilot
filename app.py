@@ -280,6 +280,8 @@ def home():
     LiveKit: CONNECTING...
 </div>
 
+<div id="livekitDataStatus">LiveKit Data: READY</div>
+
 <textarea id="q">Get weather in San Francisco</textarea>
 
 <br>
@@ -366,8 +368,14 @@ async function connectLiveKit() {
 
 async function publishGuardianDecision(data) {
 
+    const status =
+        document.getElementById("livekitDataStatus");
+
     if (!livekitRoom ||
         !livekitRoom.localParticipant) {
+
+        status.innerText =
+            "LiveKit Data: NOT CONNECTED";
 
         return;
     }
@@ -381,21 +389,35 @@ async function publishGuardianDecision(data) {
         timestamp: data.timestamp
     });
 
-    const encoder =
-        new TextEncoder();
+    try {
+        const encoder = new TextEncoder();
 
-    await livekitRoom.localParticipant.publishData(
-        encoder.encode(message),
-        {
-            reliable: true,
-            topic: "guardian-decision"
-        }
-    );
+        await livekitRoom.localParticipant.publishData(
+            encoder.encode(message),
+            {
+                reliable: true,
+                topic: "guardian-decision"
+            }
+        );
 
-    console.log(
-        "Guardian decision published to LiveKit:",
-        message
-    );
+        status.innerText =
+            "LiveKit Data: PUBLISHED | Topic: guardian-decision";
+
+        console.log(
+            "Guardian decision published to LiveKit:",
+            message
+        );
+
+    } catch (error) {
+
+        status.innerText =
+            "LiveKit Data: FAILED | " + error.message;
+
+        console.error(
+            "Guardian LiveKit publish failed:",
+            error
+        );
+    }
 }
 
 
