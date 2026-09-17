@@ -6,11 +6,11 @@
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
 **Verification:**
-MOSS: guardian_esg_policies — EPA GHG 40 CFR Part 98, Financial Fraud, Prompt Injection Defense | 7ms CONNECTED | MOSS_ENFORCED
+MOSS: guardian_esg_policies — EPA GHG 40 CFR Part 98, Financial Fraud Prevention, Prompt Injection Defense, Secrets Management | 7ms CONNECTED | MOSS_ENFORCED
 
 **Live Demo:** https://guardian-esg-copilot.onrender.com
 
-**Live Proof:** 7ms MOSS Retrieval — CONNECTED | MOSS_ENFORCED: true | AUDIT: f09b9e1a35c68f32
+**Live Proof:** 7ms MOSS Retrieval — CONNECTED | MOSS_ENFORCED: true | Request-level Audit ID + SHA-256 generated
 
 **Status:** Live Verified — 7ms MOSS Retrieval Observed
 
@@ -53,7 +53,7 @@ Audit ID + SHA-256 Hash Generated
 
 3. **Audit Identifier Generation**
    - A unique audit identifier is generated and returned for each policy evaluation request.
-   - Example audit ID: `f09b9e1a35c68f32`
+   - A SHA-256 hash is generated for the corresponding runtime audit record.
 
 ### How MOSS Supports the Decision
 
@@ -95,7 +95,7 @@ These engineering checks support the demonstrated prototype behavior; they do no
 - **MOSS_ENFORCED: true**
 - **MOSS: CONNECTED**
 - **Risk mapping:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
-- **Audit:** `f09b9e1a35c68f32`
+- **Audit:** Unique request-level Audit ID + SHA-256 hash generated per policy evaluation request.
 
 ### How to Run
 
