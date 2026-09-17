@@ -2,7 +2,7 @@
 
 ## 🎥 Final Submission — Live Demo & Verification
 
-### 🎥 Final Demo (67 sec): https://www.loom.com/share/9d2246c31a2842a4b55039a6e3d6ae10
+### 🎥 Final Demo (1min 56sec): https://www.loom.com/share/147c69ffdf9946f884e322f303fb9905
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
 **Verification:**
@@ -33,7 +33,7 @@ Risk Evaluation
 ├── 0.65 → REVIEW
 └── 0.99 → BLOCK
 ↓
-Audit Identifier Generated
+Audit ID + SHA-256 Hash Generated
 
 ### Core Features
 
@@ -76,7 +76,7 @@ The demonstrated Guardian decision logic maps request patterns to deterministic 
 - 0.65 → REVIEW
 - 0.99 → BLOCK
 
-MOSS availability is also part of the safety boundary. When MOSS policy retrieval is unavailable, Guardian fails closed: the demonstrated request is assigned BLOCK with execution disabled and `MODE: FAIL_CLOSED`.
+MOSS availability is also part of the safety boundary. Guardian includes a fail-closed path for MOSS policy retrieval failure, where execution is blocked by default. This behavior is covered by the automated safety tests. The final demo video focuses on the demonstrated ALLOW, REVIEW, and BLOCK decision paths.
 
 The observed 7ms measurement refers specifically to MOSS policy retrieval and is not an end-to-end latency benchmark.
 
@@ -111,7 +111,7 @@ Create a `.env` file with:
 ```env
 MOSS_PROJECT_ID=your_moss_project_id
 MOSS_PROJECT_KEY=your_moss_project_key
-MOSS_INDEX_NAME=guardian-security-policies
+MOSS_INDEX_NAME=guardian_esg_policies
 ```
 
 Never commit real credentials or secrets to GitHub.
