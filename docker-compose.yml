@@ -1,0 +1,7 @@
+services:
+  guardian:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MOSS_FORCE_FAILURE: "false"

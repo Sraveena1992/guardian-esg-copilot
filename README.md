@@ -38,27 +38,22 @@ Audit Identifier Generated
 ### Core Features
 
 1. **7ms MOSS Retrieval**
-   - Live observed Moss retrieval result.
+   - Live observed MOSS retrieval result.
    - MOSS status: CONNECTED.
    - MOSS_ENFORCED: true.
    - 7ms is reported as an observed live retrieval result, not as a p50/p95/p99 benchmark.
 
-
-
 2. **Deterministic Risk Decisioning**
-  - ALLOW triggers a controlled local Weather API mock execution.
-  - REVIEW remains pending human approval with execution disabled.
-  - BLOCK prevents execution.
-  - Demonstrated mapping: 0.05 → ALLOW
-  - Demonstrated mapping: 0.65 → REVIEW
-  - Demonstrated mapping: 0.99 → BLOCK
-
-   
+   - ALLOW triggers a controlled local Weather API mock execution.
+   - REVIEW remains pending human approval with execution disabled.
+   - BLOCK prevents execution.
+   - Demonstrated mapping: 0.05 → ALLOW
+   - Demonstrated mapping: 0.65 → REVIEW
+   - Demonstrated mapping: 0.99 → BLOCK
 
 3. **Audit Identifier Generation**
-  - A unique audit identifier is generated and returned for each policy evaluation request.
-  - Example audit ID: `f09b9e1a35c68f32`
-
+   - A unique audit identifier is generated and returned for each policy evaluation request.
+   - Example audit ID: `f09b9e1a35c68f32`
 
 ### How MOSS Supports the Decision
 
@@ -85,6 +80,13 @@ MOSS availability is also part of the safety boundary. When MOSS policy retrieva
 
 The observed 7ms measurement refers specifically to MOSS policy retrieval and is not an end-to-end latency benchmark.
 
+### Engineering Verification
+
+The repository includes automated safety tests covering request validation, ALLOW execution gating, REVIEW execution blocking, BLOCK execution blocking, MOSS-unavailable fail-closed behavior, and audit record/hash generation.
+
+A minimal Dockerfile and docker-compose configuration are included for reproducible local container execution. Dependencies are pinned in `requirements.txt`, repository hygiene is covered by `.gitignore`, and GitHub Actions runs the pytest suite on pushes and pull requests.
+
+These engineering checks support the demonstrated prototype behavior; they do not claim production authentication, durable external audit storage, or a deployed human-review workflow.
 
 ### Live Proof
 
