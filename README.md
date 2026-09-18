@@ -86,6 +86,8 @@ The repository includes automated safety tests covering request validation, ALLO
 
 A minimal Dockerfile and docker-compose configuration are included for reproducible local container execution. Dependencies are pinned in `requirements.txt`, repository hygiene is covered by `.gitignore`, and GitHub Actions runs the pytest suite on pushes and pull requests.
 
+Rate limiting is configurable through environment variables and supports an optional Redis-backed backend. The local Docker Compose configuration starts Redis; when Redis is not configured, Guardian uses the bounded in-process fallback. Structured audit records are retained as JSONL for the prototype and are also emitted to application logs.
+
 These engineering checks support the demonstrated prototype behavior; they do not claim production authentication, durable external audit storage, or a deployed human-review workflow.
 
 ### Live Proof
