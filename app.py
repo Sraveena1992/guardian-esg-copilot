@@ -3,8 +3,16 @@ import os
 import time
 import hashlib
 import json
+import logging
 import threading
 from collections import defaultdict
+
+from config import RATE_LIMIT, RATE_WINDOW, AUDIT_FILE, REDIS_URL
+
+try:
+    import redis as redis_lib
+except ImportError:  # pragma: no cover - dependency is pinned in requirements.txt
+    redis_lib = None
 
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,17 +26,54 @@ app = FastAPI()
 # RATE LIMITING
 # =========================================================
 
-RATE_LIMIT = 30
-RATE_WINDOW = 60
 request_log = defaultdict(list)
+
+redis_client = None
+
+if REDIS_URL and redis_lib:
+    try:
+        redis_client = redis_lib.Redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=1,
+            socket_timeout=1,
+        )
+    except Exception:
+        redis_client = None
+
+
+def is_rate_limited(ip: str) -> bool:
+    """Use Redis when configured; otherwise use the local fallback."""
+    if redis_client is not None:
+        try:
+            key = f"guardian:rate:{ip}"
+            count = int(redis_client.incr(key))
+            if count == 1:
+                redis_client.expire(key, RATE_WINDOW)
+            return count > RATE_LIMIT
+        except Exception:
+            # Redis failure falls back to the bounded in-process limiter.
+            pass
+
+    now = time.time()
+    request_log[ip] = [
+        t for t in request_log[ip]
+        if now - t < RATE_WINDOW
+    ]
+
+    if len(request_log[ip]) >= RATE_LIMIT:
+        return True
+
+    request_log[ip].append(now)
+    return False
 
 
 # =========================================================
 # RUNTIME AUDIT STORAGE
 # =========================================================
 
-AUDIT_FILE = "audit.jsonl"
 audit_lock = threading.Lock()
+audit_logger = logging.getLogger("guardian.audit")
 
 
 def persist_audit(record: dict):
@@ -38,14 +83,12 @@ def persist_audit(record: dict):
     Each line is a complete, independently readable
     audit event.
     """
+    serialized = json.dumps(record, separators=(",", ":"))
+    audit_logger.info(serialized)
+
     with audit_lock:
         with open(AUDIT_FILE, "a", encoding="utf-8") as f:
-            f.write(
-                json.dumps(
-                    record,
-                    separators=(",", ":")
-                ) + "\n"
-            )
+            f.write(serialized + "\n")
             f.flush()
 
 
@@ -194,6 +237,9 @@ def fail_closed_response(query, reason):
 
         "total_latency":
             None,
+
+        "latency_scope":
+            "MOSS policy retrieval only; end-to-end latency not measured",
 
         "moss_mode":
             "FAIL_CLOSED",
@@ -439,7 +485,10 @@ def check_guardian(query):
             ml,
 
         "total_latency":
-            ml,
+            None,
+
+        "latency_scope":
+            "MOSS policy retrieval only; end-to-end latency not measured",
 
         "moss_mode":
             mode,
@@ -942,16 +991,7 @@ def check(
         else "unknown"
     )
 
-    now = time.time()
-
-    request_log[ip] = [
-        t
-        for t in request_log[ip]
-        if now - t < RATE_WINDOW
-    ]
-
-    if len(request_log[ip]) >= RATE_LIMIT:
-
+    if is_rate_limited(ip):
         raise HTTPException(
             status_code=429,
             detail=(
@@ -959,8 +999,6 @@ def check(
                 "Please try again later."
             )
         )
-
-    request_log[ip].append(now)
 
     query = payload.query.strip()
 
@@ -1027,6 +1065,8 @@ def get_audit():
 def health():
     return {
         "ok": True,
-        "latency_ms": 7,
-        "security_mode": "FAIL_CLOSED"
+        "moss_retrieval_ms_observed": 7,
+        "latency_scope": "MOSS policy retrieval only; end-to-end latency not measured",
+        "security_mode": "FAIL_CLOSED",
+        "rate_limit_backend": "redis" if redis_client is not None else "in-memory fallback",
     }
