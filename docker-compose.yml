@@ -1,7 +1,16 @@
 services:
+  redis:
+    image: redis:8-alpine
+
   guardian:
     build: .
     ports:
       - "8000:8000"
     environment:
       MOSS_FORCE_FAILURE: "false"
+      REDIS_URL: "redis://redis:6379/0"
+      GUARDIAN_RATE_LIMIT: "30"
+      GUARDIAN_RATE_WINDOW_SECONDS: "60"
+      GUARDIAN_AUDIT_FILE: "audit.jsonl"
+    depends_on:
+      - redis
