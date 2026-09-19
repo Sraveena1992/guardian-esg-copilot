@@ -449,7 +449,7 @@ def home():
 <html>
 <head>
   <title>GUARDIAN - ESG Copilot</title>
-  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js"></script>
   <style>
     body { background:#111; color:#eee; font-family:monospace; padding:20px; }
     textarea { width:100%; height:80px; background:#222; color:#fff; box-sizing:border-box; padding:10px; }
@@ -597,7 +597,7 @@ document.getElementById("blockBtn").onclick = function() {
   run();
 };
 
-connectLiveKit();
+window.addEventListener("load", connectLiveKit);
 </script>
 </body>
 </html>
