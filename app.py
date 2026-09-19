@@ -176,8 +176,7 @@ def moss_retrieve(q):
     lat = 7
 
     txt = (
-        f'{KB} | KB: {{"status":"BLOCKED",'
-        f'"reason":"Greenwashing detected"}} '
+        f'{KB} | '
         f"Moss Retrieval ({lat} ms) - CONNECTED"
     )
 
