@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 
-from moss import MossClient, MutationOptions
+from moss import DocumentInfo, MossClient, MutationOptions
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +24,15 @@ async def main() -> None:
     client = MossClient(project_id, project_key)
 
     with POLICY_FILE.open("r", encoding="utf-8") as f:
-        documents = json.load(f)
+        raw_documents = json.load(f)
+    documents = [
+        DocumentInfo(
+            id=str(doc["id"]),
+            text=str(doc["text"]),
+            metadata=doc.get("metadata") or {},
+        )
+        for doc in raw_documents
+    ]
 
     try:
         await client.get_index(index_name)
@@ -35,8 +43,15 @@ async def main() -> None:
         )
         print(f"Updated Moss index: {index_name}")
     except Exception:
-        await client.create_index(index_name, documents)
-        print(f"Created Moss index: {index_name}")
+        created = await client.create_index(
+            index_name,
+            documents,
+            "moss-minilm",
+        )
+        print(
+            f"Created Moss index: {index_name} "
+            f"(job={created.job_id})"
+        )
 
 
 if __name__ == "__main__":
