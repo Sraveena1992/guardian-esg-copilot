@@ -516,8 +516,7 @@ def home(
             "\nTOOL: " + str(result_data.get("tool_execution", "")) +
             "\nAUDIT: " + str(result_data.get("audit", "")) +
             "\nHASH: " + str(result_data.get("audit_hash", "")) +
-            "\nMODE: " + str(result_data.get("mode", "")) +
-            "\n\nLIVEKIT: CONNECTED"
+            "\nMODE: " + str(result_data.get("mode", ""))
         )
 
     return f"""
@@ -559,6 +558,10 @@ def home(
       );
       window.guardianLiveKitRoom = room;
       status.innerText = "LiveKit: CONNECTED | Room: guardian-esg-demo";
+      const resultBox = document.getElementById("r");
+      if (resultBox && resultBox.innerText && !resultBox.innerText.includes("LIVEKIT: CONNECTED")) {
+        resultBox.innerText += "\\n\\nLIVEKIT: CONNECTED";
+      }
     }} catch (error) {{
       console.error("LiveKit connection failed:", error);
       status.innerText = "LiveKit: CONNECTION FAILED";
