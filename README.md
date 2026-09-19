@@ -1,9 +1,12 @@
-# GUARDIAN — ESG Copilot | Zero-Trust Security Gateway
+# GUARDIAN — ESG Policy Enforcement Gateway
 
 ## 🎥 Final Submission — Live Demo & Verification
 
-### 🎥 Final Demo (2min 12sec): https://www.loom.com/share/8c5fc882055d439b8d7d5c777e3e90d4
-**GitHub:** Sraveena1992/guardian-esg-copilot
+### Final Demo
+https://www.loom.com/share/8c5fc882055d439b8d7d5c777e3e90d4
+
+**GitHub:** https://github.com/Sraveena1992/guardian-esg-copilot  
+**Live Demo:** https://guardian-esg-copilot.onrender.com
 
 ### Live Decision Screenshots
 
@@ -19,114 +22,103 @@
 
 ![BLOCK 0.99](docs/screenshots/BLOCK%200.99%20screenshot.jpeg)
 
-**Verification:**
-Policy context: guardian_esg_policies — EPA GHG 40 CFR Part 98, Financial Fraud Prevention, Prompt Injection Defense, Secrets Management | 7ms observed in current demo UI | MOSS_ENFORCED mode
+## What is GUARDIAN?
 
-**Live Demo:** https://guardian-esg-copilot.onrender.com
+GUARDIAN is a policy-first security gateway for AI-agent actions. It retrieves policy context through the MOSS runtime, applies deterministic risk decisioning, blocks or pauses protected execution, and records a request-level audit event.
 
-**Live Proof:** 7ms observed policy-context processing | MOSS_ENFORCED mode | Request-level Audit ID + SHA-256 generated
+## Current Architecture
 
-**Status:** Live Verified — 7ms observed policy-context processing
-
-### What is GUARDIAN?
-
-“GUARDIAN is an ESG AI safety copilot that processes policy context and produces explicit risk outcomes: ALLOW, REVIEW, and BLOCK.”
-
-### Architecture
-
-User
-↓
-Guardian ESG Copilot
-↓
+```
+User / Agent Request
+        ↓
 FastAPI Request Entry Point
-↓
-Policy-Context Processing — 7ms observed
-↓
-Risk Evaluation
-├── 0.05 → ALLOW
-├── 0.65 → REVIEW
-└── 0.99 → BLOCK
-↓
-Audit ID + SHA-256 Hash Generated
-
-### Core Features
-
-1. **7ms Observed Policy-Context Processing**
-   - Live observed policy-context processing result.
-   - MOSS_ENFORCED mode is active.
-   - 7ms is not an end-to-end latency benchmark.
-
-2. **Deterministic Risk Decisioning**
-   - ALLOW triggers a controlled local Weather API mock execution.
-   - REVIEW remains pending human approval with execution disabled.
-   - BLOCK prevents execution.
-   - Demonstrated mapping: 0.05 → ALLOW
-   - Demonstrated mapping: 0.65 → REVIEW
-   - Demonstrated mapping: 0.99 → BLOCK
-
-3. **Audit Identifier Generation**
-   - A unique audit identifier is generated and returned for each policy evaluation request.
-   - A SHA-256 hash is generated for the corresponding runtime audit record.
-
-### How MOSS Supports the Decision
-
-Guardian processes the demonstrated policy context before the deterministic Guardian decision step.
-
-The current demonstrated flow is:
-
-Policy-Context Processing
-↓
-Processed policy context
-↓
-Guardian deterministic risk evaluation
-↓
-Risk outcome
+        ↓
+Pydantic Validation + CORS + Rate Limiting
+        ↓
+MOSS Policy Retrieval
+        ↓
+Deterministic Risk / Decision Logic
+        ↓
 ALLOW / REVIEW / BLOCK
+        ↓
+Controlled Tool Execution Gate
+        ↓
+Runtime Audit Record
+        ↓
+LiveKit decision-event publishing (demo client)
+```
 
-The demonstrated Guardian decision logic maps request patterns to deterministic risk outcomes:
+### Demonstrated outcomes
 
-- 0.05 → ALLOW
-- 0.65 → REVIEW
-- 0.99 → BLOCK
+- **0.05 → ALLOW** — controlled local Weather API mock executes.
+- **0.65 → REVIEW** — execution is disabled and returns `PENDING_HUMAN_APPROVAL`.
+- **0.99 → BLOCK** — execution is disabled.
+- **MOSS failure → FAIL_CLOSED → BLOCK** — execution is disabled.
 
-Policy-layer failure is also part of the safety boundary. Guardian includes a fail-closed path where execution is blocked by default when the policy layer is unavailable.
+## MOSS Integration
 
-The observed 7ms value refers to the demonstrated policy-context processing display and is not an end-to-end latency benchmark.
+The repository uses the official Python `moss` SDK and reads credentials server-side from environment variables:
 
-### Engineering Verification
+- `MOSS_PROJECT_ID`
+- `MOSS_PROJECT_KEY`
+- `MOSS_INDEX_NAME` (default: `guardian_esg_policies`)
 
-The repository includes automated safety tests covering request validation, ALLOW execution gating, REVIEW execution blocking, BLOCK execution blocking, MOSS-unavailable fail-closed behavior, and audit record/hash generation.
+MOSS policy retrieval is part of the request critical path. The application records the runtime query latency returned by MOSS. **This is retrieval latency only; it is not an end-to-end application latency benchmark.** MOSS credentials or a working policy index must be configured for `MOSS_ENFORCED` mode. When `MOSS_DEMO_FALLBACK=true` is explicitly enabled for a local demo, the output is labeled `DEMO_FALLBACK` and must not be presented as live MOSS.
 
-A minimal Dockerfile and docker-compose configuration are included for reproducible local container execution. Dependencies are pinned in `requirements.txt`, repository hygiene is covered by `.gitignore`, and GitHub Actions runs the pytest suite on pushes and pull requests.
+## Security Controls
 
-Rate limiting is configurable through environment variables and supports an optional Redis-backed backend. The local Docker Compose configuration starts Redis; when Redis is not configured, Guardian uses the bounded in-process fallback. Structured audit records are retained as JSONL for the prototype and are also emitted to application logs.
+- Pydantic query validation: 1–2000 characters.
+- Restricted CORS for the live origin.
+- Configurable rate limiting with optional Redis backend and bounded in-process fallback.
+- Fail-closed when MOSS policy retrieval is unavailable.
+- Request-level Audit ID and SHA-256 event hash.
+- Review and block paths prevent controlled tool execution.
 
-These engineering checks support the demonstrated prototype behavior; they do not claim production authentication, durable external audit storage, or a deployed human-review workflow.
+## Auditability
 
-### Live Proof
+Each decision produces a runtime `audit.jsonl` record containing Audit ID, timestamp, decision, risk score, MOSS mode/latency, execution status, reason, and SHA-256 hash.
 
-- Live application: https://guardian-esg-copilot.onrender.com
-- **Policy-context processing: 7ms — live observed**
-- **MOSS_ENFORCED mode is active**
-- **MOSS: CONNECTED**
-- **Risk mapping:** 0.05 → ALLOW | 0.65 → REVIEW | 0.99 → BLOCK
-- **Audit:** Unique request-level Audit ID + SHA-256 hash generated per policy evaluation request.
+The hash provides integrity evidence for the recorded event; the runtime file is not claimed to be immutable or durable external storage.
 
-### How to Run
+## LiveKit
+
+The browser demo client connects to the configured LiveKit development token server and publishes a `guardian-decision` data event containing the Guardian decision, risk score, audit ID, and timestamp.
+
+This demonstrates real-time decision-event publishing. It does not claim a production governance dashboard or a full human-approval workflow.
+
+## Engineering Verification
+
+The repository includes automated tests for request validation, ALLOW execution, REVIEW blocking, BLOCK blocking, MOSS fail-closed behavior, audit hashing, rate limiting, the compatibility API route, and explicit latency semantics.
+
+GitHub Actions runs the test suite on pushes and pull requests. Dependencies are pinned in `requirements.txt`. Docker and Docker Compose files provide reproducible local execution.
+
+## Setup
+
+Install:
 
 ```bash
 pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-### Environment Variables
-
-Create a `.env` file with:
+Set server-side MOSS configuration:
 
 ```env
-MOSS_PROJECT_ID=your_moss_project_id
-MOSS_PROJECT_KEY=your_moss_project_key
+MOSS_PROJECT_ID=your_project_id
+MOSS_PROJECT_KEY=your_project_key
 MOSS_INDEX_NAME=guardian_esg_policies
+MOSS_DEMO_FALLBACK=false
+```
+
+Create or refresh the policy index:
+
+```bash
+python -m scripts.setup_moss
+```
+
+Run:
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 Never commit real credentials or secrets to GitHub.
