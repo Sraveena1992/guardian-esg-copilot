@@ -477,10 +477,16 @@ def _render_demo_page(
       border:1px solid #333;
       box-sizing:border-box;
     }}
+    form {{
+      display:inline-block;
+      margin:0;
+      padding:0;
+    }}
     button {{
       padding:8px 20px;
       margin:6px 4px 0 0;
       cursor:pointer;
+      display:inline-block;
     }}
     #status,#dataStatus {{
       margin-top:15px;
