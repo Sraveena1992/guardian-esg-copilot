@@ -12,15 +12,15 @@ https://www.loom.com/share/8c5fc882055d439b8d7d5c777e3e90d4
 
 **ALLOW — 0.05**
 
-![ALLOW 0.05](docs/screenshots/ALLOW%200.05%20screenshot.jpeg)
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/ALLOW%200.05%20screenshot.jpeg" alt="ALLOW 0.05" width="100%">
 
 **REVIEW — 0.65**
 
-![REVIEW 0.65](docs/screenshots/REVIEW%200.65%20screenshot.jpeg)
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/REVIEW%200.65%20screenshot.jpeg" alt="REVIEW 0.65" width="100%">
 
 **BLOCK — 0.99**
 
-![BLOCK 0.99](docs/screenshots/BLOCK%200.99%20screenshot.jpeg)
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/BLOCK%200.99%20screenshot.jpeg" alt="BLOCK 0.99" width="100%">
 
 ## What is GUARDIAN?
 
