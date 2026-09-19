@@ -158,7 +158,59 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        await client.load_index(MOSS_INDEX_NAME)
+        try:
+            await client.load_index(MOSS_INDEX_NAME)
+        except Exception as load_exc:
+            # Keep the existing Guardian index; refresh it in place rather
+            # than asking the user to delete/recreate it manually.
+            policy_file = os.path.join(
+                os.path.dirname(__file__),
+                "policies",
+                "guardian_esg_policies.json",
+            )
+            try:
+                with open(policy_file, "r", encoding="utf-8") as f:
+                    documents = json.load(f)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Guardian policy file unavailable: {exc}"
+                ) from exc
+
+            try:
+                await client.get_index(MOSS_INDEX_NAME)
+            except Exception as get_index_exc:
+                try:
+                    await client.create_index(
+                        MOSS_INDEX_NAME,
+                        documents,
+                    )
+                except Exception as create_exc:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' unavailable. "
+                        f"load={load_exc}; get_index={get_index_exc}; "
+                        f"create={create_exc}"
+                    ) from create_exc
+            else:
+                try:
+                    await client.add_docs(
+                        MOSS_INDEX_NAME,
+                        documents,
+                        MutationOptions(upsert=True),
+                    )
+                except Exception as refresh_exc:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' exists but could not "
+                        f"be refreshed. load={load_exc}; refresh={refresh_exc}"
+                    ) from refresh_exc
+
+            try:
+                await client.load_index(MOSS_INDEX_NAME)
+            except Exception as final_load_exc:
+                raise RuntimeError(
+                    f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded "
+                    f"after refresh. load={load_exc}; final_load={final_load_exc}"
+                ) from final_load_exc
+
         _moss_index_loaded = True
 
     results = await client.query(
