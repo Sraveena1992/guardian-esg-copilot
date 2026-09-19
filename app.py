@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import MossClient, MutationOptions, QueryOptions
+    from moss import DocumentInfo, MossClient, MutationOptions, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
@@ -164,12 +164,62 @@ async def _moss_query_async(query: str):
             # in-process local retrieval.
             await client.load_index(MOSS_INDEX_NAME)
             _moss_index_loaded = True
-        except Exception:
-            _moss_local_load_failed = True
-            # Current Moss SDK supports querying an existing project index
-            # through the cloud query API when local index loading is not
-            # available in the deployment environment.
-            _moss_index_loaded = False
+        except Exception as load_exc:
+            # If the index does not exist yet, create it from the repository's
+            # checked-in policy documents, then load it and continue.
+            try:
+                await client.get_index(MOSS_INDEX_NAME)
+            except Exception:
+                policy_file = os.path.join(
+                    os.path.dirname(__file__),
+                    "policies",
+                    "guardian_esg_policies.json",
+                )
+                try:
+                    with open(policy_file, "r", encoding="utf-8") as f:
+                        raw_documents = json.load(f)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Guardian policy file unavailable: {exc}"
+                    ) from exc
+
+                documents = [
+                    DocumentInfo(
+                        id=str(doc.get("id", "")),
+                        text=str(doc.get("text", "")),
+                        metadata=doc.get("metadata") or {},
+                    )
+                    for doc in raw_documents
+                ]
+
+                if not documents:
+                    raise RuntimeError(
+                        "Guardian policy file contains no documents"
+                    )
+
+                try:
+                    await client.create_index(
+                        MOSS_INDEX_NAME,
+                        documents,
+                    )
+                except Exception as create_exc:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
+                        f"{create_exc}"
+                    ) from create_exc
+
+            try:
+                await client.load_index(MOSS_INDEX_NAME)
+                _moss_index_loaded = True
+            except Exception as reload_exc:
+                # Current Moss SDK supports querying an existing project index
+                # through the cloud query API when local loading is unavailable.
+                _moss_local_load_failed = True
+                _moss_index_loaded = False
+                # Preserve the original local-load error as debugging context
+                # if the cloud query also fails.
+                if str(load_exc) and str(reload_exc):
+                    pass
 
     results = await client.query(
         MOSS_INDEX_NAME,
