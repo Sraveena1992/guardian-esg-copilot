@@ -458,7 +458,7 @@ def home():
 <html>
 <head>
   <title>GUARDIAN - ESG Copilot</title>
-
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
   <style>
     body { background:#111; color:#eee; font-family:monospace; padding:20px; }
     textarea { width:100%; height:80px; background:#222; color:#fff; box-sizing:border-box; padding:10px; }
@@ -482,17 +482,6 @@ def home():
 <div id="r"></div>
 
 <script>
-function loadLiveKitSdk() {
-  const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js";
-  script.onload = connectLiveKit;
-  script.onerror = function() {
-    document.getElementById("livekitStatus").innerText =
-      "LiveKit: SDK UNAVAILABLE";
-  };
-  document.head.appendChild(script);
-}
-
 const LIVEKIT_TOKEN_SERVER_ID = "guardianesgcopilot-1v2q23";
 const LIVEKIT_ROOM = "guardian-esg-demo";
 let livekitRoom = null;
@@ -617,7 +606,7 @@ document.getElementById("blockBtn").onclick = function() {
   run();
 };
 
-loadLiveKitSdk();
+connectLiveKit();
 </script>
 </body>
 </html>
