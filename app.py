@@ -130,6 +130,7 @@ KB = (
 
 _moss_client = None
 _moss_index_loaded = False
+_moss_local_load_failed = False
 _moss_lock = threading.Lock()
 
 
@@ -153,17 +154,18 @@ def _get_moss_client():
 
 
 async def _moss_query_async(query: str):
-    global _moss_index_loaded
+    global _moss_index_loaded, _moss_local_load_failed
 
     client = _get_moss_client()
 
-    if not _moss_index_loaded:
+    if not _moss_index_loaded and not _moss_local_load_failed:
         try:
             # Preferred path: load the project index into the runtime for
             # in-process local retrieval.
             await client.load_index(MOSS_INDEX_NAME)
             _moss_index_loaded = True
         except Exception:
+            _moss_local_load_failed = True
             # Current Moss SDK supports querying an existing project index
             # through the cloud query API when local index loading is not
             # available in the deployment environment.
