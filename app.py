@@ -158,16 +158,66 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        await client.load_index(MOSS_INDEX_NAME)
-        _moss_index_loaded = True
+        try:
+            await client.load_index(MOSS_INDEX_NAME)
+            _moss_index_loaded = True
+        except Exception as load_exc:
+            try:
+                return await client.query(
+                    MOSS_INDEX_NAME,
+                    query,
+                    QueryOptions(top_k=5),
+                )
+            except Exception as query_exc:
+                policy_file = os.path.join(
+                    os.path.dirname(__file__),
+                    "policies",
+                    "guardian_esg_policies.json",
+                )
+                try:
+                    with open(policy_file, "r", encoding="utf-8") as f:
+                        raw_documents = json.load(f)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Guardian policy file unavailable: {exc}"
+                    ) from exc
 
-    results = await client.query(
+                documents = [
+                    {
+                        "id": str(doc.get("id", "")),
+                        "text": str(doc.get("text", "")),
+                        "metadata": doc.get("metadata") or {},
+                    }
+                    for doc in raw_documents
+                ]
+                if not documents:
+                    raise RuntimeError(
+                        "Guardian policy file contains no documents"
+                    )
+
+                try:
+                    await client.create_index(
+                        MOSS_INDEX_NAME,
+                        documents,
+                    )
+                except Exception:
+                    pass
+
+                try:
+                    await client.load_index(MOSS_INDEX_NAME)
+                    _moss_index_loaded = True
+                except Exception as reload_exc:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
+                        f"load={load_exc}; cloud_query={query_exc}; "
+                        f"reload={reload_exc}"
+                    ) from reload_exc
+
+    return await client.query(
         MOSS_INDEX_NAME,
         query,
         QueryOptions(top_k=5),
     )
-    return results
-
 
 def moss_retrieve(query: str):
     """
@@ -449,7 +499,7 @@ def home():
 <html>
 <head>
   <title>GUARDIAN - ESG Copilot</title>
-  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js"></script>
   <style>
     body { background:#111; color:#eee; font-family:monospace; padding:20px; }
     textarea { width:100%; height:80px; background:#222; color:#fff; box-sizing:border-box; padding:10px; }
@@ -597,7 +647,7 @@ document.getElementById("blockBtn").onclick = function() {
   run();
 };
 
-connectLiveKit();
+window.addEventListener("load", connectLiveKit);
 </script>
 </body>
 </html>
