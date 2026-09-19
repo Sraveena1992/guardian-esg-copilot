@@ -153,95 +153,142 @@ def _get_moss_client():
         return _moss_client
 
 
+async def _wait_for_moss_job(
+    client: MossClient,
+    job_id: str,
+    timeout_seconds: int = 120,
+) -> None:
+    deadline = time.monotonic() + timeout_seconds
+
+    while True:
+        job = await client.get_job_status(job_id)
+        status_value = getattr(
+            getattr(job, "status", None),
+            "value",
+            getattr(job, "status", None),
+        )
+        status_value = str(status_value).upper()
+
+        if status_value == "COMPLETED":
+            return
+
+        if status_value == "FAILED":
+            detail = getattr(job, "error", None) or "unknown error"
+            raise RuntimeError(
+                f"MOSS index job {job_id} failed: {detail}"
+            )
+
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                f"MOSS index job {job_id} did not complete within "
+                f"{timeout_seconds}s"
+            )
+
+        await asyncio.sleep(1)
+
+
+async def _wait_for_moss_index_ready(
+    client: MossClient,
+    index_name: str,
+    timeout_seconds: int = 120,
+) -> None:
+    deadline = time.monotonic() + timeout_seconds
+
+    while True:
+        info = await client.get_index(index_name)
+        status_value = str(
+            getattr(info, "status", "")
+        ).upper()
+
+        if status_value in {"READY", "COMPLETED"}:
+            return
+
+        if status_value == "FAILED":
+            raise RuntimeError(
+                f"MOSS index '{index_name}' is in FAILED state"
+            )
+
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                f"MOSS index '{index_name}' was not ready within "
+                f"{timeout_seconds}s (status={status_value or 'UNKNOWN'})"
+            )
+
+        await asyncio.sleep(1)
+
+
 async def _moss_query_async(query: str):
-    global _moss_index_loaded, _moss_local_load_failed
+    global _moss_index_loaded
 
     client = _get_moss_client()
 
-    if not _moss_index_loaded and not _moss_local_load_failed:
+    if not _moss_index_loaded:
+        index_exists = False
+
         try:
-            # Preferred path: load the project index into the runtime for
-            # in-process local retrieval.
+            await client.get_index(MOSS_INDEX_NAME)
+            index_exists = True
+        except Exception:
+            indexes = await client.list_indexes()
+            index_exists = any(
+                getattr(index, "name", None) == MOSS_INDEX_NAME
+                for index in indexes
+            )
+
+        if not index_exists:
+            policy_file = os.path.join(
+                os.path.dirname(__file__),
+                "policies",
+                "guardian_esg_policies.json",
+            )
+
+            try:
+                with open(policy_file, "r", encoding="utf-8") as f:
+                    raw_documents = json.load(f)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Guardian policy file unavailable: {exc}"
+                ) from exc
+
+            documents = [
+                DocumentInfo(
+                    id=str(doc.get("id", "")),
+                    text=str(doc.get("text", "")),
+                    metadata={
+                        str(key): str(value)
+                        for key, value in (doc.get("metadata") or {}).items()
+                    },
+                )
+                for doc in raw_documents
+            ]
+
+            if not documents:
+                raise RuntimeError(
+                    "Guardian policy file contains no documents"
+                )
+
+            creation = await client.create_index(
+                MOSS_INDEX_NAME,
+                documents,
+                "moss-minilm",
+            )
+
+            job_id = getattr(creation, "job_id", None)
+            if job_id:
+                await _wait_for_moss_job(client, job_id)
+
+        await _wait_for_moss_index_ready(
+            client,
+            MOSS_INDEX_NAME,
+        )
+
+        try:
             await client.load_index(MOSS_INDEX_NAME)
             _moss_index_loaded = True
-        except Exception as load_exc:
-            # If the index does not exist yet, create it from the repository's
-            # checked-in policy documents, then load it and continue.
-            try:
-                await client.get_index(MOSS_INDEX_NAME)
-            except Exception:
-                policy_file = os.path.join(
-                    os.path.dirname(__file__),
-                    "policies",
-                    "guardian_esg_policies.json",
-                )
-                try:
-                    with open(policy_file, "r", encoding="utf-8") as f:
-                        raw_documents = json.load(f)
-                except Exception as exc:
-                    raise RuntimeError(
-                        f"Guardian policy file unavailable: {exc}"
-                    ) from exc
-
-                documents = [
-                    DocumentInfo(
-                        id=str(doc.get("id", "")),
-                        text=str(doc.get("text", "")),
-                        metadata=doc.get("metadata") or {},
-                    )
-                    for doc in raw_documents
-                ]
-
-                if not documents:
-                    raise RuntimeError(
-                        "Guardian policy file contains no documents"
-                    )
-
-                try:
-                    mutation = await client.create_index(
-                        MOSS_INDEX_NAME,
-                        documents,
-                    )
-                    job_id = getattr(mutation, "job_id", None)
-                    if job_id:
-                        deadline = time.monotonic() + 60
-                        while time.monotonic() < deadline:
-                            job = await client.get_job_status(job_id)
-                            status_value = getattr(
-                                getattr(job, "status", None),
-                                "value",
-                                getattr(job, "status", None),
-                            )
-                            if status_value == "COMPLETED":
-                                break
-                            if status_value == "FAILED":
-                                raise RuntimeError(
-                                    getattr(job, "error", None)
-                                    or "MOSS index build failed"
-                                )
-                            await asyncio.sleep(1)
-                        else:
-                            raise RuntimeError(
-                                "MOSS index build did not complete within 60 seconds"
-                            )
-                except Exception as create_exc:
-                    raise RuntimeError(
-                        f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
-                        f"{create_exc}"
-                    ) from create_exc
-
-            try:
-                await client.load_index(MOSS_INDEX_NAME)
-                _moss_index_loaded = True
-            except Exception as reload_exc:
-                # Current Moss SDK supports querying an existing project index
-                # through the cloud query API when local loading is unavailable.
-                _moss_local_load_failed = True
-                _moss_index_loaded = False
-                # Preserve the original local-load error as debugging context
-                # if the cloud query also fails.
-                if str(load_exc) and str(reload_exc):
-                    pass
+        except Exception:
+            # The cloud index is valid even when the local runtime cannot
+            # load it; MossClient.query() can fall back to cloud retrieval.
+            _moss_index_loaded = False
 
     results = await client.query(
         MOSS_INDEX_NAME,
