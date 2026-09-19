@@ -16,3 +16,8 @@ RATE_LIMIT = _positive_int("GUARDIAN_RATE_LIMIT", 30)
 RATE_WINDOW = _positive_int("GUARDIAN_RATE_WINDOW_SECONDS", 60)
 AUDIT_FILE = os.getenv("GUARDIAN_AUDIT_FILE", "audit.jsonl").strip() or "audit.jsonl"
 REDIS_URL = os.getenv("REDIS_URL", "").strip()
+
+MOSS_PROJECT_ID = os.getenv("MOSS_PROJECT_ID", "").strip()
+MOSS_PROJECT_KEY = os.getenv("MOSS_PROJECT_KEY", "").strip()
+MOSS_INDEX_NAME = os.getenv("MOSS_INDEX_NAME", "guardian_esg_policies").strip() or "guardian_esg_policies"
+MOSS_DEMO_FALLBACK = os.getenv("MOSS_DEMO_FALLBACK", "false").lower() == "true"
