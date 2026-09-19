@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import MossClient, QueryOptions
+    from moss import DocumentInfo, MossClient, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
@@ -152,6 +152,28 @@ def _get_moss_client():
         return _moss_client
 
 
+async def _wait_for_moss_job(client, job_id: str, timeout_seconds: int = 90) -> None:
+    deadline = time.monotonic() + timeout_seconds
+
+    while time.monotonic() < deadline:
+        status = await client.get_job_status(job_id)
+        status_obj = getattr(status, "status", None)
+        status_value = getattr(status_obj, "value", str(status_obj or "")).lower()
+
+        if status_value == "completed":
+            return
+
+        if status_value in {"failed", "error", "cancelled"}:
+            error = getattr(status, "error", None)
+            raise RuntimeError(
+                f"MOSS index build failed: {error or status_value}"
+            )
+
+        await asyncio.sleep(1)
+
+    raise RuntimeError("MOSS index build timed out")
+
+
 async def _moss_query_async(query: str):
     global _moss_index_loaded
 
@@ -159,38 +181,72 @@ async def _moss_query_async(query: str):
 
     if not _moss_index_loaded:
         try:
-            index_info = await client.get_index(MOSS_INDEX_NAME)
-        except Exception as exc:
-            raise RuntimeError(
-                f"MOSS index '{MOSS_INDEX_NAME}' could not be read: {exc}"
-            ) from exc
-
-        status = str(getattr(index_info, "status", "") or "")
-        if status and status.lower() not in {"ready", "built", "complete"}:
-            raise RuntimeError(
-                f"MOSS index '{MOSS_INDEX_NAME}' is not ready (status={status})"
+            await client.load_index(MOSS_INDEX_NAME)
+        except Exception as load_exc:
+            policy_file = os.path.join(
+                os.path.dirname(__file__),
+                "policies",
+                "guardian_esg_policies.json",
             )
 
-        try:
-            await client.load_index(MOSS_INDEX_NAME)
-        except Exception as exc:
-            raise RuntimeError(
-                f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded: {exc}"
-            ) from exc
+            try:
+                await client.get_index(MOSS_INDEX_NAME)
+                # The index exists but may still be building. Retry the load
+                # before treating it as unavailable.
+                last_error = load_exc
+                for _ in range(20):
+                    try:
+                        await client.load_index(MOSS_INDEX_NAME)
+                        last_error = None
+                        break
+                    except Exception as exc:
+                        last_error = exc
+                        await asyncio.sleep(1)
+
+                if last_error is not None:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded: "
+                        f"{last_error}"
+                    ) from last_error
+
+            except Exception:
+                try:
+                    with open(policy_file, "r", encoding="utf-8") as f:
+                        raw_documents = json.load(f)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Guardian policy file unavailable: {exc}"
+                    ) from exc
+
+                documents = [
+                    DocumentInfo(
+                        id=str(doc["id"]),
+                        text=str(doc["text"]),
+                        metadata=doc.get("metadata") or {},
+                    )
+                    for doc in raw_documents
+                ]
+
+                try:
+                    created = await client.create_index(
+                        MOSS_INDEX_NAME,
+                        documents,
+                        "moss-minilm",
+                    )
+                    await _wait_for_moss_job(client, created.job_id)
+                    await client.load_index(MOSS_INDEX_NAME)
+                except Exception as create_exc:
+                    raise RuntimeError(
+                        f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
+                        f"{create_exc}"
+                    ) from create_exc
 
         _moss_index_loaded = True
 
-    # Keep the user's request in the retrieval query while adding stable
-    # policy vocabulary so keyword-only search can resolve the governance index
-    # without requiring the local embedding model.
-    retrieval_query = (
-        f"{query} ESG policy compliance governance"
-    )
-
     results = await client.query(
         MOSS_INDEX_NAME,
-        retrieval_query,
-        QueryOptions(top_k=5, alpha=0.0),
+        query,
+        QueryOptions(top_k=5),
     )
     return results
 
