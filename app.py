@@ -198,10 +198,32 @@ async def _moss_query_async(query: str):
                     )
 
                 try:
-                    await client.create_index(
+                    mutation = await client.create_index(
                         MOSS_INDEX_NAME,
                         documents,
                     )
+                    job_id = getattr(mutation, "job_id", None)
+                    if job_id:
+                        deadline = time.monotonic() + 60
+                        while time.monotonic() < deadline:
+                            job = await client.get_job_status(job_id)
+                            status_value = getattr(
+                                getattr(job, "status", None),
+                                "value",
+                                getattr(job, "status", None),
+                            )
+                            if status_value == "COMPLETED":
+                                break
+                            if status_value == "FAILED":
+                                raise RuntimeError(
+                                    getattr(job, "error", None)
+                                    or "MOSS index build failed"
+                                )
+                            await asyncio.sleep(1)
+                        else:
+                            raise RuntimeError(
+                                "MOSS index build did not complete within 60 seconds"
+                            )
                 except Exception as create_exc:
                     raise RuntimeError(
                         f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
