@@ -493,8 +493,7 @@ def home(
             "\nTOOL: " + str(result_data.get("tool_execution", "")) +
             "\nAUDIT: " + str(result_data.get("audit", "")) +
             "\nHASH: " + str(result_data.get("audit_hash", "")) +
-            "\nMODE: " + str(result_data.get("mode", "")) +
-            "\n\nLIVEKIT: CONNECTED"
+            "\nMODE: " + str(result_data.get("mode", ""))
         )
 
     return f"""
