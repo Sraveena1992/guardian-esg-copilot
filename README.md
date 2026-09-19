@@ -5,6 +5,20 @@
 ### 🎥 Final Demo (2min 12sec): https://www.loom.com/share/8c5fc882055d439b8d7d5c777e3e90d4
 **GitHub:** Sraveena1992/guardian-esg-copilot
 
+### Live Decision Screenshots
+
+**ALLOW — 0.05**
+
+![ALLOW 0.05](docs/screenshots/01-allow-0.05.jpg)
+
+**REVIEW — 0.65**
+
+![REVIEW 0.65](docs/screenshots/02-review-0.65.jpg)
+
+**BLOCK — 0.99**
+
+![BLOCK 0.99](docs/screenshots/03-block-0.99.jpg)
+
 **Verification:**
 Policy context: guardian_esg_policies — EPA GHG 40 CFR Part 98, Financial Fraud Prevention, Prompt Injection Defense, Secrets Management | 7ms observed in current demo UI | MOSS_ENFORCED mode
 
