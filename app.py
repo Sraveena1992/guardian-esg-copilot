@@ -158,37 +158,7 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        try:
-            await client.load_index(MOSS_INDEX_NAME)
-        except Exception:
-            policy_file = (
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "policies",
-                    "guardian_esg_policies.json",
-                )
-            )
-            try:
-                with open(policy_file, "r", encoding="utf-8") as f:
-                    documents = json.load(f)
-            except Exception as exc:
-                raise RuntimeError(
-                    f"Guardian policy file unavailable: {exc}"
-                ) from exc
-
-            try:
-                await client.create_index(
-                    MOSS_INDEX_NAME,
-                    documents,
-                )
-            except Exception as create_exc:
-                raise RuntimeError(
-                    f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
-                    f"{create_exc}"
-                ) from create_exc
-
-            await client.load_index(MOSS_INDEX_NAME)
-
+        await client.load_index(MOSS_INDEX_NAME)
         _moss_index_loaded = True
 
     results = await client.query(
@@ -197,7 +167,6 @@ async def _moss_query_async(query: str):
         QueryOptions(top_k=5),
     )
     return results
-
 
 def moss_retrieve(query: str):
     """
