@@ -665,6 +665,69 @@ def get_audit():
 
 
 # =========================================================
+# TEMPORARY MOSS DIAGNOSTIC
+# =========================================================
+
+@app.get("/moss_probe")
+async def moss_probe():
+    if not _moss_configured():
+        return {
+            "configured": False,
+            "index": MOSS_INDEX_NAME,
+            "status": "NOT_CONFIGURED",
+        }
+
+    client = _get_moss_client()
+    probe = {
+        "configured": True,
+        "index": MOSS_INDEX_NAME,
+        "get_index": None,
+        "load_index": None,
+        "query": None,
+    }
+
+    try:
+        info = await client.get_index(MOSS_INDEX_NAME)
+        safe = {}
+        raw = vars(info) if hasattr(info, "__dict__") else {}
+        for key, value in raw.items():
+            low = str(key).lower()
+            if any(secret_word in low for secret_word in ("key", "token", "secret", "credential")):
+                continue
+            safe[str(key)] = value
+        probe["get_index"] = safe or str(info)
+    except Exception as exc:
+        message = str(exc).replace(MOSS_PROJECT_KEY, "<redacted>")
+        probe["get_index"] = {"error": message}
+        return probe
+
+    try:
+        await client.load_index(MOSS_INDEX_NAME)
+        probe["load_index"] = "OK"
+    except Exception as exc:
+        message = str(exc).replace(MOSS_PROJECT_KEY, "<redacted>")
+        probe["load_index"] = {"error": message}
+        return probe
+
+    try:
+        results = await client.query(
+            MOSS_INDEX_NAME,
+            "emissions reporting greenhouse gas compliance",
+            QueryOptions(top_k=3),
+        )
+        probe["query"] = {
+            "status": "OK",
+            "docs": len(getattr(results, "docs", [])),
+            "time_taken_ms": getattr(results, "time_taken_ms", None),
+        }
+    except Exception as exc:
+        message = str(exc).replace(MOSS_PROJECT_KEY, "<redacted>")
+        probe["query"] = {"error": message}
+
+    return probe
+
+
+# =========================================================
 # HEALTH ENDPOINT
 # =========================================================
 
