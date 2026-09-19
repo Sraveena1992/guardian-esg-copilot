@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import MossClient, MutationOptions, QueryOptions
+    from moss import MossClient, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
@@ -158,64 +158,32 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        policy_file = os.path.join(
-            os.path.dirname(__file__),
-            "policies",
-            "guardian_esg_policies.json",
-        )
+        try:
+            index_info = await client.get_index(MOSS_INDEX_NAME)
+        except Exception as exc:
+            raise RuntimeError(
+                f"MOSS index '{MOSS_INDEX_NAME}' could not be read: {exc}"
+            ) from exc
+
+        status = str(getattr(index_info, "status", "") or "")
+        if status and status.lower() not in {"ready", "built", "complete"}:
+            raise RuntimeError(
+                f"MOSS index '{MOSS_INDEX_NAME}' is not ready (status={status})"
+            )
 
         try:
             await client.load_index(MOSS_INDEX_NAME)
-        except Exception as load_exc:
-            try:
-                with open(policy_file, "r", encoding="utf-8") as f:
-                    documents = json.load(f)
-            except Exception as exc:
-                raise RuntimeError(
-                    f"Guardian policy file unavailable: {exc}"
-                ) from exc
-
-            try:
-                await client.get_index(MOSS_INDEX_NAME)
-                await client.add_docs(
-                    MOSS_INDEX_NAME,
-                    documents,
-                    MutationOptions(upsert=True),
-                )
-            except Exception as refresh_exc:
-                try:
-                    await client.create_index(
-                        MOSS_INDEX_NAME,
-                        documents,
-                    )
-                except Exception as create_exc:
-                    try:
-                        await client.get_index(MOSS_INDEX_NAME)
-                        await client.add_docs(
-                            MOSS_INDEX_NAME,
-                            documents,
-                            MutationOptions(upsert=True),
-                        )
-                    except Exception as final_exc:
-                        raise RuntimeError(
-                            f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
-                            f"{final_exc}"
-                        ) from create_exc
-
-            try:
-                await client.load_index(MOSS_INDEX_NAME)
-            except Exception as retry_load_exc:
-                raise RuntimeError(
-                    f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded: "
-                    f"{retry_load_exc}"
-                ) from load_exc
+        except Exception as exc:
+            raise RuntimeError(
+                f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded: {exc}"
+            ) from exc
 
         _moss_index_loaded = True
 
     results = await client.query(
         MOSS_INDEX_NAME,
         query,
-        QueryOptions(top_k=5),
+        QueryOptions(top_k=5, alpha=0.0),
     )
     return results
 
