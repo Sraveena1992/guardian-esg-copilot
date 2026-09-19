@@ -158,7 +158,58 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        await client.load_index(MOSS_INDEX_NAME)
+        policy_file = os.path.join(
+            os.path.dirname(__file__),
+            "policies",
+            "guardian_esg_policies.json",
+        )
+
+        try:
+            await client.load_index(MOSS_INDEX_NAME)
+        except Exception as load_exc:
+            try:
+                with open(policy_file, "r", encoding="utf-8") as f:
+                    documents = json.load(f)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Guardian policy file unavailable: {exc}"
+                ) from exc
+
+            try:
+                await client.get_index(MOSS_INDEX_NAME)
+                await client.add_docs(
+                    MOSS_INDEX_NAME,
+                    documents,
+                    MutationOptions(upsert=True),
+                )
+            except Exception as refresh_exc:
+                try:
+                    await client.create_index(
+                        MOSS_INDEX_NAME,
+                        documents,
+                    )
+                except Exception as create_exc:
+                    try:
+                        await client.get_index(MOSS_INDEX_NAME)
+                        await client.add_docs(
+                            MOSS_INDEX_NAME,
+                            documents,
+                            MutationOptions(upsert=True),
+                        )
+                    except Exception as final_exc:
+                        raise RuntimeError(
+                            f"MOSS index '{MOSS_INDEX_NAME}' unavailable: "
+                            f"{final_exc}"
+                        ) from create_exc
+
+            try:
+                await client.load_index(MOSS_INDEX_NAME)
+            except Exception as retry_load_exc:
+                raise RuntimeError(
+                    f"MOSS index '{MOSS_INDEX_NAME}' could not be loaded: "
+                    f"{retry_load_exc}"
+                ) from load_exc
+
         _moss_index_loaded = True
 
     results = await client.query(
