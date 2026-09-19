@@ -774,7 +774,10 @@ connectLiveKit();
 </html>
 """
 
-    return HTMLResponse(content=page)
+    response = HTMLResponse(content=page)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    return response
 
 
 # =========================================================
