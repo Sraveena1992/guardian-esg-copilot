@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import DocumentInfo, MossClient, MutationOptions, QueryOptions
+    from moss import MossClient, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
@@ -130,7 +130,6 @@ KB = (
 
 _moss_client = None
 _moss_index_loaded = False
-_moss_local_load_failed = False
 _moss_lock = threading.Lock()
 
 
@@ -153,81 +152,22 @@ def _get_moss_client():
         return _moss_client
 
 
-async def _wait_for_moss_job(
-    client: MossClient,
-    job_id: str,
-    timeout_seconds: int = 120,
-) -> None:
-    deadline = time.monotonic() + timeout_seconds
-
-    while True:
-        job = await client.get_job_status(job_id)
-        status_value = getattr(
-            getattr(job, "status", None),
-            "value",
-            getattr(job, "status", None),
-        )
-        status_value = str(status_value).upper()
-
-        if status_value == "COMPLETED":
-            return
-
-        if status_value == "FAILED":
-            detail = getattr(job, "error", None) or "unknown error"
-            raise RuntimeError(
-                f"MOSS index job {job_id} failed: {detail}"
-            )
-
-        if time.monotonic() >= deadline:
-            raise TimeoutError(
-                f"MOSS index job {job_id} did not complete within "
-                f"{timeout_seconds}s"
-            )
-
-        await asyncio.sleep(1)
-
-
-async def _wait_for_moss_index_ready(
-    client: MossClient,
-    index_name: str,
-    timeout_seconds: int = 120,
-) -> None:
-    deadline = time.monotonic() + timeout_seconds
-
-    while True:
-        info = await client.get_index(index_name)
-        status_value = str(
-            getattr(info, "status", "")
-        ).upper()
-
-        if status_value in {"READY", "COMPLETED"}:
-            return
-
-        if status_value == "FAILED":
-            raise RuntimeError(
-                f"MOSS index '{index_name}' is in FAILED state"
-            )
-
-        if time.monotonic() >= deadline:
-            raise TimeoutError(
-                f"MOSS index '{index_name}' was not ready within "
-                f"{timeout_seconds}s (status={status_value or 'UNKNOWN'})"
-            )
-
-        await asyncio.sleep(1)
-
-
 async def _moss_query_async(query: str):
+    global _moss_index_loaded
+
     client = _get_moss_client()
 
-    # MossClient.query() uses the authenticated cloud query path when the
-    # local index has not been loaded. This is the reliable deployment path;
-    # the project/index already exist in Moss Cloud.
-    return await client.query(
+    if not _moss_index_loaded:
+        await client.load_index(MOSS_INDEX_NAME)
+        _moss_index_loaded = True
+
+    results = await client.query(
         MOSS_INDEX_NAME,
         query,
         QueryOptions(top_k=5),
     )
+    return results
+
 
 def moss_retrieve(query: str):
     """
