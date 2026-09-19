@@ -9,6 +9,7 @@ import app as app_module
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(app_module, "AUDIT_FILE", str(tmp_path / "audit.jsonl"))
+    monkeypatch.setattr(app_module, "MOSS_DEMO_FALLBACK", True)
     monkeypatch.delenv("MOSS_FORCE_FAILURE", raising=False)
     monkeypatch.setattr(app_module, "redis_client", None)
     monkeypatch.setattr(app_module, "RATE_LIMIT", 30)
@@ -31,6 +32,7 @@ def test_allow_executes_controlled_weather_mock(client):
     assert body["risk_score"] == 0.05
     assert body["executed"] is True
     assert body["tool_execution"] == "EXECUTED - Weather API (controlled mock)"
+    assert body["moss_mode"] == "DEMO_FALLBACK"
 
 
 def test_review_does_not_execute_tool(client, monkeypatch):
@@ -120,8 +122,9 @@ def test_health_is_explicit_about_latency_scope(client):
     response = client.get("/health")
     assert response.status_code == 200
     body = response.json()
-    assert body["moss_retrieval_ms_observed"] == 7
+    assert body["moss_retrieval_ms_observed"] is None
     assert "end-to-end latency not measured" in body["latency_scope"]
+    assert body["moss_mode"] == "DEMO_FALLBACK"
 
 
 def test_secret_exfiltration_is_blocked(client):
@@ -154,3 +157,12 @@ def test_fail_closed_audit_records_reason(client, monkeypatch):
     record = audit_response.json()["records"][-1]
     assert record["mode"] == "FAIL_CLOSED"
     assert "MOSS policy retrieval failed" in record["reason"]
+
+
+def test_compatibility_api_route(client):
+    response = client.post(
+        "/api/guardian/check",
+        json={"query": "Get weather in San Francisco"},
+    )
+    assert response.status_code == 200
+    assert response.json()["decision"] == "ALLOW"
