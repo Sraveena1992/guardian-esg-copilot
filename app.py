@@ -180,9 +180,16 @@ async def _moss_query_async(query: str):
 
         _moss_index_loaded = True
 
+    # Keep the user's request in the retrieval query while adding stable
+    # policy vocabulary so keyword-only search can resolve the governance index
+    # without requiring the local embedding model.
+    retrieval_query = (
+        f"{query} ESG policy compliance governance"
+    )
+
     results = await client.query(
         MOSS_INDEX_NAME,
-        query,
+        retrieval_query,
         QueryOptions(top_k=5, alpha=0.0),
     )
     return results
