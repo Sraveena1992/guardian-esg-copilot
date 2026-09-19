@@ -218,23 +218,11 @@ async def _wait_for_moss_index_ready(
 
 
 async def _moss_query_async(query: str):
-    global _moss_index_loaded
-
     client = _get_moss_client()
 
-    if not _moss_index_loaded:
-        try:
-            await client.load_index(MOSS_INDEX_NAME)
-            _moss_index_loaded = True
-        except Exception as exc:
-            # On managed runtimes, local index loading may be unavailable.
-            # MossClient.query() then uses the authenticated cloud query path.
-            logging.getLogger("guardian.moss").warning(
-                "MOSS local index load unavailable; using authenticated cloud query: %s",
-                exc,
-            )
-            _moss_index_loaded = False
-
+    # MossClient.query() uses the authenticated cloud query path when the
+    # local index has not been loaded. This is the reliable deployment path;
+    # the project/index already exist in Moss Cloud.
     return await client.query(
         MOSS_INDEX_NAME,
         query,
@@ -521,7 +509,7 @@ def home():
 <html>
 <head>
   <title>GUARDIAN - ESG Copilot</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
   <style>
     body { background:#111; color:#eee; font-family:monospace; padding:20px; }
     textarea { width:100%; height:80px; background:#222; color:#fff; box-sizing:border-box; padding:10px; }
