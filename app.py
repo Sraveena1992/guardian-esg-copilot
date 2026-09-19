@@ -629,7 +629,9 @@ def home(
       let mossLine = "MOSS: " + data.moss_policy_retrieval;
       if (data.moss_mode === "MOSS_ENFORCED") {{
         mossLine =
-          "MOSS: " + data.moss_policy_retrieval;
+          "MOSS: guardian_esg_policies Moss Retrieval (" +
+          data.moss_latency +
+          " ms) CONNECTED";
       }}
 
       output.innerText =
