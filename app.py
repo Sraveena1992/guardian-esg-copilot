@@ -448,39 +448,84 @@ def home():
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GUARDIAN - ESG Copilot</title>
-  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <title>GUARDIAN - ESG Policy Enforcement Gateway</title>
   <style>
-    body { background:#111; color:#eee; font-family:monospace; padding:20px; }
-    textarea { width:100%; height:80px; background:#222; color:#fff; box-sizing:border-box; padding:10px; }
-    button { padding:8px 12px; margin:4px; cursor:pointer; }
-    #livekitStatus,#livekitDataStatus { margin:8px 0; padding:10px; border:1px solid #333; }
-    #r { margin-top:20px; background:#222; padding:12px; white-space:pre-wrap; }
+    body {
+      background:#000;
+      color:#0f0;
+      font-family:monospace;
+      padding:20px;
+    }
+    textarea {
+      width:100%;
+      height:80px;
+      padding:10px;
+      background:#111;
+      color:#fff;
+      border:1px solid #333;
+      box-sizing:border-box;
+    }
+    button {
+      padding:8px 20px;
+      margin:6px 4px 0 0;
+      cursor:pointer;
+    }
+    #status,#dataStatus {
+      margin-top:15px;
+      padding:10px;
+      border:1px solid #333;
+    }
+    #r {
+      margin-top:20px;
+      border:1px solid #333;
+      background:#111;
+      padding:10px;
+      white-space:pre-wrap;
+    }
   </style>
 </head>
 <body>
-<h2>GUARDIAN - 7ms MOSS</h2>
-<div id="livekitStatus">LiveKit: CONNECTING...</div>
-<div id="livekitDataStatus">LiveKit Data: READY</div>
+<h3>GUARDIAN - ESG Policy Enforcement Gateway</h3>
+
+<div id="status">LiveKit: CONNECTING...</div>
+<div id="dataStatus">LiveKit Data: READY</div>
 
 <textarea id="q">Get weather in San Francisco</textarea>
 <br>
+<button id="runBtn" type="button">Run</button>
+<button id="reviewBtn" type="button">REVIEW 0.65</button>
+<button id="blockBtn" type="button">BLOCK 0.99</button>
 
-<button type="button" id="runBtn">Run</button>
-<button type="button" id="reviewBtn">REVIEW 0.65</button>
-<button type="button" id="blockBtn">BLOCK 0.99</button>
-
-<div id="r"></div>
+<pre id="r"></pre>
 
 <script>
 const LIVEKIT_TOKEN_SERVER_ID = "guardianesgcopilot-1v2q23";
 const LIVEKIT_ROOM = "guardian-esg-demo";
 let livekitRoom = null;
 
+function loadLiveKitSdk() {
+  const script = document.createElement("script");
+  script.src =
+    "https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js";
+  script.onload = () => connectLiveKit();
+  script.onerror = () => {
+    document.getElementById("status").innerText =
+      "LiveKit: SDK UNAVAILABLE";
+  };
+  document.head.appendChild(script);
+}
+
 async function connectLiveKit() {
-  const status = document.getElementById("livekitStatus");
+  const status = document.getElementById("status");
+
+  if (!window.LivekitClient) {
+    status.innerText = "LiveKit: SDK UNAVAILABLE";
+    return;
+  }
+
   try {
     status.innerText = "LiveKit: FETCHING TOKEN...";
+
     const tokenSource =
       LivekitClient.TokenSource.developmentTokenServer(
         LIVEKIT_TOKEN_SERVER_ID
@@ -491,6 +536,7 @@ async function connectLiveKit() {
     });
 
     livekitRoom = new LivekitClient.Room();
+
     await livekitRoom.connect(
       credentials.serverUrl,
       credentials.participantToken
@@ -505,7 +551,7 @@ async function connectLiveKit() {
 }
 
 async function publishGuardianDecision(data) {
-  const status = document.getElementById("livekitDataStatus");
+  const status = document.getElementById("dataStatus");
 
   if (!livekitRoom || !livekitRoom.localParticipant) {
     status.innerText = "LiveKit Data: NOT CONNECTED";
@@ -549,8 +595,8 @@ async function run() {
   try {
     const response = await fetch("/check", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query })
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({query})
     });
 
     const data = await response.json();
@@ -571,9 +617,7 @@ async function run() {
       "\nTOOL: " + data.tool_execution +
       "\nAUDIT: " + data.audit +
       "\nHASH: " + data.audit_hash +
-      "\nMODE: " + data.mode +
-      "\n\nLIVEKIT: " +
-      (livekitRoom ? "CONNECTED" : "NOT CONNECTED");
+      "\nMODE: " + data.mode;
 
     await publishGuardianDecision(data);
   } catch (error) {
@@ -597,12 +641,13 @@ document.getElementById("blockBtn").onclick = function() {
   run();
 };
 
-connectLiveKit();
+// Load the optional LiveKit SDK asynchronously so it can never block
+// the Guardian Run/REVIEW/BLOCK controls from becoming interactive.
+loadLiveKitSdk();
 </script>
 </body>
 </html>
 """
-
 
 # =========================================================
 # CHECK ENDPOINTS
