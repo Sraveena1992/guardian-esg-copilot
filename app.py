@@ -223,79 +223,23 @@ async def _moss_query_async(query: str):
     client = _get_moss_client()
 
     if not _moss_index_loaded:
-        index_exists = False
-
-        try:
-            await client.get_index(MOSS_INDEX_NAME)
-            index_exists = True
-        except Exception:
-            indexes = await client.list_indexes()
-            index_exists = any(
-                getattr(index, "name", None) == MOSS_INDEX_NAME
-                for index in indexes
-            )
-
-        if not index_exists:
-            policy_file = os.path.join(
-                os.path.dirname(__file__),
-                "policies",
-                "guardian_esg_policies.json",
-            )
-
-            try:
-                with open(policy_file, "r", encoding="utf-8") as f:
-                    raw_documents = json.load(f)
-            except Exception as exc:
-                raise RuntimeError(
-                    f"Guardian policy file unavailable: {exc}"
-                ) from exc
-
-            documents = [
-                DocumentInfo(
-                    id=str(doc.get("id", "")),
-                    text=str(doc.get("text", "")),
-                    metadata={
-                        str(key): str(value)
-                        for key, value in (doc.get("metadata") or {}).items()
-                    },
-                )
-                for doc in raw_documents
-            ]
-
-            if not documents:
-                raise RuntimeError(
-                    "Guardian policy file contains no documents"
-                )
-
-            creation = await client.create_index(
-                MOSS_INDEX_NAME,
-                documents,
-                "moss-minilm",
-            )
-
-            job_id = getattr(creation, "job_id", None)
-            if job_id:
-                await _wait_for_moss_job(client, job_id)
-
-        await _wait_for_moss_index_ready(
-            client,
-            MOSS_INDEX_NAME,
-        )
-
         try:
             await client.load_index(MOSS_INDEX_NAME)
             _moss_index_loaded = True
-        except Exception:
-            # The cloud index is valid even when the local runtime cannot
-            # load it; MossClient.query() can fall back to cloud retrieval.
+        except Exception as exc:
+            # On managed runtimes, local index loading may be unavailable.
+            # MossClient.query() then uses the authenticated cloud query path.
+            logging.getLogger("guardian.moss").warning(
+                "MOSS local index load unavailable; using authenticated cloud query: %s",
+                exc,
+            )
             _moss_index_loaded = False
 
-    results = await client.query(
+    return await client.query(
         MOSS_INDEX_NAME,
         query,
         QueryOptions(top_k=5),
     )
-    return results
 
 def moss_retrieve(query: str):
     """
