@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import MossClient, QueryOptions
+    from moss import MossClient, MutationOptions, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
