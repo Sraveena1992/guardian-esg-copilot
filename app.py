@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - dependency is pinned
     redis_lib = None
 
 try:
-    from moss import MossClient, MutationOptions, QueryOptions
+    from moss import MossClient, QueryOptions
 except ImportError:  # pragma: no cover - dependency is pinned
     MossClient = None
     QueryOptions = None
@@ -130,7 +130,6 @@ KB = (
 
 _moss_client = None
 _moss_index_loaded = False
-_moss_local_load_failed = False
 _moss_lock = threading.Lock()
 
 
@@ -154,22 +153,13 @@ def _get_moss_client():
 
 
 async def _moss_query_async(query: str):
-    global _moss_index_loaded, _moss_local_load_failed
+    global _moss_index_loaded
 
     client = _get_moss_client()
 
-    if not _moss_index_loaded and not _moss_local_load_failed:
-        try:
-            # Preferred path: load the project index into the runtime for
-            # in-process local retrieval.
-            await client.load_index(MOSS_INDEX_NAME)
-            _moss_index_loaded = True
-        except Exception:
-            _moss_local_load_failed = True
-            # Current Moss SDK supports querying an existing project index
-            # through the cloud query API when local index loading is not
-            # available in the deployment environment.
-            _moss_index_loaded = False
+    if not _moss_index_loaded:
+        await client.load_index(MOSS_INDEX_NAME)
+        _moss_index_loaded = True
 
     results = await client.query(
         MOSS_INDEX_NAME,
@@ -177,6 +167,7 @@ async def _moss_query_async(query: str):
         QueryOptions(top_k=5),
     )
     return results
+
 
 def moss_retrieve(query: str):
     """
