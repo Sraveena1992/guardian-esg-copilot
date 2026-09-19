@@ -1,19 +1,21 @@
-// GUARDIAN - Real-time ESG Compliance Guard
-// Performance: 8ms p50 Moss JS retrieval | 6ms p50 Lyzr Eval
+// GUARDIAN agent manifest — evidence-aligned
+// This file documents the active project surface only.
+// It intentionally contains no unverified latency, accuracy, cost, or
+// third-party evaluation claims.
+
 export const guardianAgent = {
-  name: "GUARDIAN-ESG-Guard",
-  version: "1.0.0 #1 READY",
-  latency: {
-    moss_retrieval: "8ms p50 / <10ms p99",
-    lyzr_eval: "6ms p50 / <8ms p99"
-  },
-  features: {
-    accuracy: "99.95% EPA accuracy",
-    cost: "$0.0008/calc",
-    audit: "AIMS SHA256 audit + Deterministic Formula",
-    compliance: "Real-time ESG Compliance Guard",
-    block: "anti-greenwashing block"
-  },
-  monitors: "GreenLedger calculations 24/7",
-  alert: "Pre-audit failure detection"
-}
+  name: "GUARDIAN ESG Policy Enforcement Gateway",
+  version: "1.0.0",
+  entryPoint: "FastAPI",
+  policyLayer: "MOSS",
+  decisionStates: ["ALLOW", "REVIEW", "BLOCK"],
+  safetyBoundary: "FAIL_CLOSED on MOSS policy retrieval failure",
+  executionDemo: "controlled Weather API mock",
+  audit: "request-level Audit ID + timestamp + SHA-256",
+  realtimeChannel: "LiveKit guardian-decision",
+  notes: {
+    latency: "Report only runtime MOSS query measurements; never claim end-to-end latency.",
+    review: "REVIEW halts execution; production human-approval workflow is not implemented.",
+    storage: "audit.jsonl is runtime prototype storage; durable external retention is future work."
+  }
+};
