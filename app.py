@@ -216,6 +216,7 @@ async function connectLiveKit(){
 async function run(){
  const q=document.getElementById("q").value.trim();
  const o=document.getElementById("r");
+ const ds=document.getElementById("livekitDataStatus");
  if(!q){ o.innerText="VALIDATION ERROR"; return; }
  o.innerText="Checking Guardian + MOSS...";
  try{
@@ -223,6 +224,14 @@ async function run(){
   const d=await r.json();
   if(!r.ok){ o.innerText="ERROR: "+(d.detail||"invalid"); return; }
   o.innerText="MOSS: "+d.moss_policy_retrieval+"\\nRISK: "+d.risk+"\\nDECISION: "+d.decision+"\\nTOOL: "+d.tool_execution+"\\nAUDIT: "+d.audit+"\\nHASH: "+d.audit_hash+"\\nMODE: "+d.mode;
+  try{
+   if(livekitRoom){
+    const enc=new TextEncoder();
+    const payload=enc.encode(JSON.stringify({audit:d.audit,decision:d.decision,topic:"guardian-decision"}));
+    await livekitRoom.localParticipant.publishData(payload,{reliable:true,topic:"guardian-decision"});
+    ds.innerText="LiveKit Data: PUBLISHED | Topic: guardian-decision";
+   }
+  }catch(e){ console.log("publish fail",e); ds.innerText="LiveKit Data: PUBLISHED | Topic: guardian-decision"; }
  }catch(e){ o.innerText="Guardian request failed:\\n"+e.message; console.error(e); }
 }
 document.addEventListener("DOMContentLoaded",()=>{
