@@ -10,17 +10,14 @@ https://www.loom.com/share/8c5fc882055d439b8d7d5c777e3e90d4
 
 ### Live Decision Screenshots
 
-**ALLOW — 0.05**
+**ALLOW - 0.05**
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/ALLOW.jpeg" width="100%">
 
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/ALLOW%200.05%20screenshot.jpeg" alt="ALLOW 0.05" width="100%">
+**REVIEW - 0.65**
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/REVIEW.jpeg" width="100%">
 
-**REVIEW — 0.65**
-
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/REVIEW%200.65%20screenshot.jpeg" alt="REVIEW 0.65" width="100%">
-
-**BLOCK — 0.99**
-
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/docs/screenshots/BLOCK%200.99%20screenshot.jpeg" alt="BLOCK 0.99" width="100%">
+**BLOCK - 0.99**
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/BLOCK.jpeg" width="100%">
 
 ## What is GUARDIAN?
 
