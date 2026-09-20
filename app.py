@@ -79,7 +79,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["https://guardian-esg-copilot.
 class GuardianRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=2000)
 
-KB = "guardian_esg_policies - EPA GHG 40 CFR Part 98, Financial Fraud Prevention, Prompt Injection Defense, Secrets Management"
+KB = "EPA GHG 40 CFR Part 98, Financial Fraud Prevention, Prompt Injection Defense, Secrets Management"
 
 _moss_client = None
 _moss_index_loaded = False
@@ -132,32 +132,32 @@ async def _moss_query_async(query: str):
 def moss_retrieve(query: str):
     if os.getenv("MOSS_FORCE_FAILURE", "").lower() == "true":
         if MOSS_DEMO_FALLBACK:
-            return (f"{MOSS_INDEX_NAME} | {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
+            return (f"{MOSS_INDEX_NAME} - {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
         raise RuntimeError("MOSS policy retrieval unavailable")
     if not _moss_configured():
         if MOSS_DEMO_FALLBACK:
-            return (f"{MOSS_INDEX_NAME} | {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
+            return (f"{MOSS_INDEX_NAME} - {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
         raise RuntimeError("MOSS credentials/index are not configured")
     started = time.perf_counter()
     try:
         results = asyncio.run(_moss_query_async(query))
     except Exception as exc:
         if MOSS_DEMO_FALLBACK:
-            return (f"{MOSS_INDEX_NAME} | {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
+            return (f"{MOSS_INDEX_NAME} - {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
         raise RuntimeError(f"MOSS policy retrieval failed: {exc}") from exc
     docs = []
     for doc in getattr(results, "docs", [])[:5]:
         docs.append({"id": getattr(doc, "id", None), "score": getattr(doc, "score", None), "text": getattr(doc, "text", ""), "metadata": getattr(doc, "metadata", {}) or {}})
     if not docs:
         if MOSS_DEMO_FALLBACK:
-            return (f"{MOSS_INDEX_NAME} | {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
+            return (f"{MOSS_INDEX_NAME} - {KB} | Moss Retrieval (7 ms) - CONNECTED", 7, "MOSS_ENFORCED", [])
         raise RuntimeError(f"MOSS returned no policy context for index '{MOSS_INDEX_NAME}'")
     elapsed_ms = getattr(results, "time_taken_ms", None)
     if elapsed_ms is None:
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
     top_text = docs[0]["text"].strip()
     policy_context = top_text if top_text else KB
-    return (f"{MOSS_INDEX_NAME} | {policy_context} | Moss Retrieval ({elapsed_ms} ms) - CONNECTED", elapsed_ms, "MOSS_ENFORCED", docs)
+    return (f"{MOSS_INDEX_NAME} - {policy_context} | Moss Retrieval ({elapsed_ms} ms) - CONNECTED", elapsed_ms, "MOSS_ENFORCED", docs)
 
 def make_audit_id(query: str) -> str:
     return hashlib.sha256(f"{query}{time.time_ns()}".encode()).hexdigest()[:16]
