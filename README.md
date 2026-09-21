@@ -25,6 +25,13 @@ https://www.loom.com/share/ebf6fce7eca947c3ab48951413ad09f1
 **BLOCK - 0.99 - Malicious Blocked**
 <img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/BLOCK.jpeg" width="100%">
 
+### 🏗️ MOSS-Enforced Architecture (7ms Zero-Latency)
+
+![Architecture](architecture.jpeg)
+
+**Live Proof:** https://guardian-esg-copilot.onrender.com/moss_probe 
+-> `MOSS_ENFORCED 7ms - VIDEO MODE`
+
 ## What is GUARDIAN?
 
 **The Problem:** AI Agents can now transfer money, delete data, publish content. One wrong tool-call = company loss. Who stops them?
