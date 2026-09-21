@@ -5,8 +5,14 @@
 ### Final Demo
 https://www.loom.com/share/ebf6fce7eca947c3ab48951413ad09f1
 
+### 🔍 Live Verification
+- **Live App:** https://guardian-esg-copilot.onrender.com
+- 
+- **MOSS Probe (7ms Proof):** https://guardian-esg-copilot.onrender.com/moss_probe
+    - Status: `OK - MOSS_ENFORCED 7ms - VIDEO MODE`
+    - Index: `guardian_esg_policies`
+    - 
 **GitHub:** https://github.com/Sraveena1992/guardian-esg-copilot  
-**Live Demo:** https://guardian-esg-copilot.onrender.com
 
 ### Live Decision Screenshots (MOSS-ENFORCED - 7ms)
 
