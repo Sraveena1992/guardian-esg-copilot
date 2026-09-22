@@ -166,3 +166,87 @@ def test_compatibility_api_route(client):
     )
     assert response.status_code == 200
     assert response.json()["decision"] == "ALLOW"
+
+
+
+def test_moss_policy_metadata_can_drive_review(client, monkeypatch):
+    monkeypatch.setattr(
+        app_module,
+        "moss_retrieve",
+        lambda _query: (
+            "guardian_esg_policies - FINANCIAL_FRAUD",
+            4.2,
+            "MOSS_ENFORCED",
+            [{
+                "id": "financial-fraud-prevention",
+                "score": 0.91,
+                "text": "Sensitive external transfer requires review.",
+                "metadata": {
+                    "policy": "FINANCIAL_FRAUD",
+                    "default_action": "REVIEW",
+                },
+            }],
+        ),
+    )
+    response = client.post(
+        "/check",
+        json={"query": "Please evaluate this ordinary request."},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "REVIEW"
+    assert body["decision_source"] == "moss-policy"
+    assert body["policy_id"] == "financial-fraud-prevention"
+    assert body["executed"] is False
+
+
+def test_moss_policy_metadata_can_drive_block(client, monkeypatch):
+    monkeypatch.setattr(
+        app_module,
+        "moss_retrieve",
+        lambda _query: (
+            "guardian_esg_policies - PROMPT_INJECTION",
+            4.1,
+            "MOSS_ENFORCED",
+            [{
+                "id": "prompt-injection-defense",
+                "score": 0.93,
+                "text": "Bypass attempts must be blocked.",
+                "metadata": {
+                    "policy": "PROMPT_INJECTION",
+                    "default_action": "BLOCK",
+                },
+            }],
+        ),
+    )
+    response = client.post(
+        "/check",
+        json={"query": "Please review this ordinary request."},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "BLOCK"
+    assert body["decision_source"] == "moss-policy"
+    assert body["policy_id"] == "prompt-injection-defense"
+    assert body["executed"] is False
+
+
+def test_moss_probe_does_not_claim_fake_latency(client, monkeypatch):
+    async def fake_query(_query):
+        class Result:
+            time_taken_ms = 6.7
+            docs = []
+        return Result()
+
+    monkeypatch.setattr(app_module, "_moss_query_async", fake_query)
+    monkeypatch.setattr(app_module, "MOSS_PROJECT_ID", "id")
+    monkeypatch.setattr(app_module, "MOSS_PROJECT_KEY", "key")
+    monkeypatch.setattr(app_module, "MOSS_INDEX_NAME", "guardian_esg_policies")
+    monkeypatch.setattr(app_module, "MOSS_DEMO_FALLBACK", False)
+
+    response = client.get("/moss_probe")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "OK - MOSS_ENFORCED"
+    assert body["time_taken_ms"] == 6.7
+    assert body["latency_scope"] == "MOSS query latency only"
