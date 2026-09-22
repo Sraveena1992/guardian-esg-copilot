@@ -260,6 +260,7 @@ def check_guardian(query: str) -> dict[str, Any]:
         executed = False
     else:
         reason = "Approved low-risk request"
+        execution_result = execute_weather_mock(query)
         tool_execution = "EXECUTED - Weather API (controlled mock)"
         executed = True
 
@@ -306,7 +307,7 @@ def check_guardian(query: str) -> dict[str, Any]:
     }
 
     if action == "ALLOW":
-        response["execution_result"] = execute_weather_mock(query)
+        response["execution_result"] = execution_result
 
     return response
 
