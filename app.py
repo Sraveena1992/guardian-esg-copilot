@@ -408,7 +408,7 @@ async function run(){
     await livekitRoom.localParticipant.publishData(payload,{reliable:true,topic:"guardian-decision"});
     ds.innerText="LiveKit Data: PUBLISHED | Topic: guardian-decision";
    }
-  }catch(e){ console.log("publish fail",e); ds.innerText="LiveKit Data: PUBLISHED | Topic: guardian-decision"; }
+  }catch(e){ console.log("publish fail",e); ds.innerText="LiveKit Data: FAILED | Topic: guardian-decision"; }
  }catch(e){ o.innerText="Guardian request failed:\\n"+e.message; console.error(e); }
 }
 document.addEventListener("DOMContentLoaded",()=>{
