@@ -178,25 +178,138 @@ def execute_weather_mock(query: str) -> dict[str, str]:
 def check_guardian(query: str) -> dict[str, Any]:
     query = query or ""
     normalized = query.lower().strip()
+
     if not normalized:
         return fail_closed_response(query, "Empty request")
+
     try:
         moss_text, moss_latency, moss_mode, policy_docs = moss_retrieve(normalized)
     except Exception as exc:
         return fail_closed_response(query, str(exc))
-    audit_id = make_audit_id(normalized)
-    timestamp = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
-    if any(token in normalized for token in ("ignore", "system prompt", "stripe_api_key", "sk_live", "secret", "api_key")):
-        decision = {"risk": "0.99 - BLOCK", "risk_score": 0.99, "decision": "BLOCK", "tool_execution": "BLOCKED - Prompt Injection / Secret Exfiltration", "executed": False, "reason": "Prompt Injection / Secret Exfiltration"}
-    elif any(token in normalized for token in ("customer database", "external api", "transfer $5000", "external account")):
-        decision = {"risk": "0.65 - REVIEW", "risk_score": 0.65, "decision": "REVIEW", "tool_execution": "PENDING_HUMAN_APPROVAL - Financial Fraud / PII", "executed": False, "reason": "Financial Fraud / PII"}
+
+    # Defense-in-depth: explicit dangerous patterns can never be downgraded.
+    block_tokens = (
+        "ignore",
+        "system prompt",
+        "stripe_api_key",
+        "sk_live",
+        "secret",
+        "api_key",
+    )
+    review_tokens = (
+        "customer database",
+        "external api",
+        "transfer $5000",
+        "external account",
+    )
+
+    top_doc = policy_docs[0] if policy_docs else {}
+    metadata = top_doc.get("metadata", {}) or {}
+    moss_action = str(metadata.get("default_action", "")).upper()
+    policy_id = str(top_doc.get("id") or metadata.get("policy") or "unknown")
+
+    if any(token in normalized for token in block_tokens):
+        action = "BLOCK"
+        policy_id = "defense-in-depth"
+        source = "local-safety-override"
+    elif any(token in normalized for token in review_tokens):
+        action = "REVIEW"
+        source = "defense-in-depth"
+        if moss_action == "BLOCK":
+            action = "BLOCK"
+            source = "moss-policy"
+    elif moss_action in {"ALLOW", "REVIEW", "BLOCK"}:
+        action = moss_action
+        source = "moss-policy"
     else:
-        mock_result = execute_weather_mock(query)
-        decision = {"risk": "0.05 - ALLOW", "risk_score": 0.05, "decision": "ALLOW", "tool_execution": "EXECUTED - Weather API (controlled mock)", "execution_result": mock_result, "executed": True, "reason": "Approved low-risk request"}
-    payload = f"{audit_id}|{normalized}|{decision['decision']}|{decision['risk_score']}|{timestamp}"
-    audit_hash = make_audit_hash(payload)
-    persist_audit({"audit": audit_id, "audit_hash": audit_hash, "timestamp": timestamp, "query": normalized, "decision": decision["decision"], "risk_score": decision["risk_score"], "mode": moss_mode, "moss_latency": moss_latency, "executed": decision["executed"], "reason": decision["reason"]})
-    return {"moss_policy_retrieval": moss_text, "moss_latency": moss_latency, "total_latency": None, "latency_scope": "MOSS policy retrieval only; end-to-end latency not measured", "moss_mode": moss_mode, "mode": moss_mode, "risk": decision["risk"], "risk_score": decision["risk_score"], "decision": decision["decision"], "tool_execution": decision["tool_execution"], "executed": decision["executed"], "audit": audit_id, "audit_hash": audit_hash, "timestamp": timestamp, "reason": f"{decision['reason']}. MOSS {moss_latency}ms. Audit:{audit_id}", "policy_context": policy_docs}
+        return fail_closed_response(
+            query,
+            "MOSS policy did not return a supported default_action",
+        )
+
+    risk_map = {
+        "ALLOW": ("0.05 - ALLOW", 0.05),
+        "REVIEW": ("0.65 - REVIEW", 0.65),
+        "BLOCK": ("0.99 - BLOCK", 0.99),
+    }
+    risk, risk_score = risk_map[action]
+
+    audit_id = make_audit_id(normalized)
+    timestamp = time.strftime(
+        "%Y-%m-%dT%H:%M:%S+00:00",
+        time.gmtime(),
+    )
+
+    if action == "BLOCK":
+        reason = (
+            "Prompt Injection / Secret Exfiltration"
+            if policy_id == "defense-in-depth"
+            or "prompt" in policy_id.lower()
+            or "secret" in policy_id.lower()
+            else "Policy-enforced BLOCK"
+        )
+        tool_execution = (
+            "BLOCKED - Prompt Injection / Secret Exfiltration"
+            if reason == "Prompt Injection / Secret Exfiltration"
+            else "BLOCKED - Policy Enforcement"
+        )
+        executed = False
+    elif action == "REVIEW":
+        reason = "Financial Fraud / PII"
+        tool_execution = "PENDING_HUMAN_APPROVAL - Financial Fraud / PII"
+        executed = False
+    else:
+        reason = "Approved low-risk request"
+        tool_execution = "EXECUTED - Weather API (controlled mock)"
+        executed = True
+
+    record = {
+        "audit": audit_id,
+        "timestamp": timestamp,
+        "query": normalized,
+        "decision": action,
+        "risk_score": risk_score,
+        "policy_id": policy_id,
+        "decision_source": source,
+        "mode": moss_mode,
+        "moss_latency": moss_latency,
+        "executed": executed,
+        "reason": reason,
+    }
+
+    payload = (
+        f"{audit_id}|{normalized}|{action}|"
+        f"{risk_score}|{policy_id}|{timestamp}"
+    )
+    record["audit_hash"] = make_audit_hash(payload)
+    persist_audit(record)
+
+    response = {
+        "moss_policy_retrieval": moss_text,
+        "moss_latency": moss_latency,
+        "total_latency": None,
+        "latency_scope": "MOSS policy retrieval only; end-to-end latency not measured",
+        "moss_mode": moss_mode,
+        "mode": moss_mode,
+        "policy_id": policy_id,
+        "decision_source": source,
+        "risk": risk,
+        "risk_score": risk_score,
+        "decision": action,
+        "tool_execution": tool_execution,
+        "executed": executed,
+        "audit": audit_id,
+        "audit_hash": record["audit_hash"],
+        "timestamp": timestamp,
+        "reason": f"{reason}. MOSS {moss_latency}ms. Audit:{audit_id}",
+        "policy_context": policy_docs,
+    }
+
+    if action == "ALLOW":
+        response["execution_result"] = execute_weather_mock(query)
+
+    return response
+
 
 @app.get("/", response_class=HTMLResponse)
 def home():
