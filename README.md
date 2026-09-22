@@ -3,95 +3,135 @@
 ## 🎥 Final Submission — Live Demo & Verification
 
 ### Final Demo
-https://www.loom.com/share/ebf6fce7eca947c3ab48951413ad09f1
+- **Loom Video Walkthrough:** https://www.loom.com/share/ebf6fce7eca947c3ab48951413ad09f1
 
-### 🔍 Live Verification
-- **Live App:** https://guardian-esg-copilot.onrender.com
-- 
-- **MOSS Probe (7ms Proof):** https://guardian-esg-copilot.onrender.com/moss_probe
-    - Status: `OK - MOSS_ENFORCED 7ms - VIDEO MODE`
-    - Index: `guardian_esg_policies`
-    - 
-**GitHub:** https://github.com/Sraveena1992/guardian-esg-copilot  
+### ✅ Live Verification — ACTIVE (22-09-2026)
+- **`/health`:** `ok: true, moss_configured: true, moss_mode: MOSS_ENFORCED, security_mode: FAIL_CLOSED`
+- **`/moss_probe`:** `configured: true, load_index: OK, docs: 3, status: OK, time_taken_ms: 0-1`
 
-### Live Decision Screenshots (MOSS-ENFORCED - 7ms)
+### 🔍 Live Verification & Probes
+- **Live App Deployment:** https://guardian-esg-copilot.onrender.com
+- **Health Check Probe:** https://guardian-esg-copilot.onrender.com/health
+- **MOSS Probe (Latency Proof - Achieved 0-1ms):** https://guardian-esg-copilot.onrender.com/moss_probe
+  - **Status:** `OK - MOSS_ENFORCED`
+  - **Index Name:** `guardian_esg_policies`
+  - **Retrieval Latency:** `0-1 ms CONNECTED (Target <7ms)`
+  - **Live Documents:** `3 policy docs active`
+- **GitHub Repository:** https://github.com/Sraveena1992/guardian-esg-copilot
+
+---
+
+### Live Decision Screenshots (MOSS-ENFORCED - 0-1ms)
 
 **ALLOW - 0.05 - Safe Execution**
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/ALLOW.jpeg" width="100%">
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/ALLOW.jpeg" width="100%" />
 
 **REVIEW - 0.65 - Human Approval Needed**
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/REVIEW.jpeg" width="100%">
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/REVIEW.jpeg" width="100%" />
 
 **BLOCK - 0.99 - Malicious Blocked**
-<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/BLOCK.jpeg" width="100%">
+<img src="https://raw.githubusercontent.com/Sraveena1992/guardian-esg-copilot/main/BLOCK.jpeg" width="100%" />
 
-### 🏗️ MOSS-Enforced Architecture (7ms Zero-Latency)
+---
+
+### 🏗️ MOSS-Enforced Architecture (Sub-10ms Zero-Latency)
 
 ![Architecture](Architecture_final.jpeg)
 
-**Live Proof:** https://guardian-esg-copilot.onrender.com/moss_probe 
--> `MOSS_ENFORCED 7ms - VIDEO MODE`
+---
 
 ## What is GUARDIAN?
 
-**The Problem:** AI Agents can now transfer money, delete data, publish content. One wrong tool-call = company loss. Who stops them?
+**The Problem:** AI Agents can now transfer money, delete data, and publish content. One wrong tool call = major enterprise loss. Who stops them?
 
 **The Solution:** GUARDIAN is a Policy-First Security Gateway that sits between Agent and Action.
 
-Unlike basic guardrails that just guess, GUARDIAN **RETRIEVES live policy from MOSS**, calculates deterministic risk, and gives provable decision.
+Unlike basic guardrails that rely on slow LLM calls or hardcoded rules, GUARDIAN **retrieves live policies directly from MOSS**, calculates deterministic risk, and yields a provable execution decision.
 
 > **MOSS is the Brain, GUARDIAN is the Gate.**
 
+---
 
-## Current Architecture
+## Current Architecture Flow
 
 ```
 User / Agent Request
-        ↓
-FastAPI + Pydantic Validation + Rate Limiting
-        ↓
+↓
+FastAPI + Pydantic Validation + Rate Limiting (Redis / Token Bucket)
+↓
 MOSS Policy Retrieval (Live - Critical Path)
-        ↓
-Deterministic Risk Engine (0.0 - 1.0)
-        ↓
+↓
+Deterministic Risk Engine (0.00 - 1.00)
+↓
 ALLOW / REVIEW / BLOCK
-        ↓
+↓
 Controlled Tool Execution Gate
-        ↓
-Audit Record (SHA-256) + LiveKit Event
+↓
+Audit Record (SHA-256) + LiveKit Real-time Event
 ```
 
 
-### Demonstrated outcomes
-- **0.05 → ALLOW** — Weather API mock executes - 7ms MOSS retrieval
-- **0.65 → REVIEW** — PENDING_HUMAN_APPROVAL - No execution
-- **0.99 → BLOCK** — Malicious - No execution
-- **MOSS failure → FAIL_CLOSED → BLOCK**
+### Demonstrated Execution Outcomes
+- **0.05 → ALLOW:** Controlled Weather API mock executes — 0–1ms MOSS retrieval.
+- **0.65 → REVIEW:** Execution held (`PENDING_HUMAN_APPROVAL`) — Human-in-the-loop required.
+- **0.99 → BLOCK:** Malicious/High-Risk query halted — Zero tool execution.
+- **MOSS Failure:** System defaults to **`FAIL_CLOSED → BLOCK`** (`executed: false`).
 
-## Why This is Best Use Case of MOSS?
+---
 
-GUARDIAN is 100% MOSS-native. Policies are NOT hardcoded. Every request retrieves `allow.yaml / review.yaml / block.yaml` from MOSS Index `guardian_esg_policies` via `moss_tools.py` at runtime. No MOSS = No Decision = FAIL_CLOSED. MOSS is not an add-on, it IS the policy brain.
+## Why This is the Best Use Case of MOSS
 
-MOSS SDK: Official Python `moss` SDK. Env: `MOSS_PROJECT_ID`, `MOSS_PROJECT_KEY`, `MOSS_INDEX_NAME`. Latency shown is MOSS retrieval latency only.
+GUARDIAN is 100% MOSS-native. Policies are **never hardcoded**. Every incoming request retrieves `allow.yaml`, `review.yaml`, or `block.yaml` from the MOSS Index (`guardian_esg_policies`) via `moss_tools.py` at runtime. 
+
+* **Zero-Trust Posture:** No MOSS connection = No Decision = **FAIL_CLOSED**.
+* **Integral Core:** MOSS is not an optional add-on; it serves as the real-time policy evaluation brain.
+* **Official SDK Integration:** Built using the official Python `moss` SDK with runtime `MOSS_PROJECT_ID`, `MOSS_PROJECT_KEY`, and `MOSS_INDEX_NAME`.
+
+---
 
 ## Security Controls
-- Pydantic validation: 1-2000 chars
-- Restricted CORS + Rate Limiting (Redis / in-process fallback)
-- Fail-closed on MOSS failure
-- Audit ID + SHA-256 hash
-- Review/Block prevents execution
+- **Pydantic Validation:** Strict payload bounds (1–2000 chars).
+- **Hardened Ingress:** Restricted CORS + Redis Rate Limiting (with in-process token bucket fallback).
+- **Fail-Closed Resilience:** Immediate halt if MOSS is unreachable or timing out (>15ms).
+- **Cryptographic Provenance:** Request-level Audit ID + SHA-256 hashing.
+- **Execution Isolation:** REVIEW and BLOCK branches completely stop downstream tool execution.
 
-## Auditability
-Each decision → `audit.jsonl` with Audit ID, timestamp, decision, risk, MOSS latency, execution status, reason, SHA-256 hash.
+---
 
-## LiveKit
-Browser demo publishes `guardian-decision` event with decision, risk score, audit ID, timestamp - Real-time governance event.
+## Auditability & Telemetry
+Each decision is appended to `audit.jsonl` with:
+- Audit ID & Timestamp
+- Decision State (`ALLOW` / `REVIEW` / `BLOCK`)
+- Computed Risk Score & MOSS Retrieval Latency
+- Execution Status & Categorized Reason
+- Cryptographic SHA-256 Hash
 
-## Engineering Verification
-Tests: validation, ALLOW, REVIEW, BLOCK, fail-closed, audit hash, rate limit, compatibility route, latency semantics. GitHub Actions + Docker + pinned requirements.
+---
 
-## Setup
+## LiveKit Real-Time Governance
+The browser demo publishes a `guardian-decision` event containing decision state, risk score, audit ID, and timestamp to provide real-time observer UI streaming.
+
+---
+
+## Engineering & Verification
+- **Automated Test Suite:** Comprehensive coverage for validation, ALLOW, REVIEW, BLOCK, Fail-Closed circuit breaker, audit hashes, and rate limiting.
+- **Deployment Hardening:** Containerized via Docker, orchestrated with pinned dependencies, and integrated with GitHub Actions CI/CD.
+
+---
+
+## Local Setup & Quickstart
+
+```bash
+# 1. Install dependencies
 pip install -r requirements.txt
-MOSS_PROJECT_ID, MOSS_PROJECT_KEY, MOSS_INDEX_NAME=guardian_esg_policies
+
+# 2. Configure environment variables
+export MOSS_PROJECT_ID="your_project_id"
+export MOSS_PROJECT_KEY="your_project_key"
+export MOSS_INDEX_NAME="guardian_esg_policies"
+
+# 3. Initialize MOSS vector index
 python -m scripts.setup_moss
+
+# 4. Launch localized Uvicorn server
 uvicorn app:app --host 0.0.0.0 --port 8000
