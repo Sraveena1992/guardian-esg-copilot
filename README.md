@@ -7,15 +7,15 @@
 
 ### ✅ Live Verification — ACTIVE (23-09-2026)
 - **`/health`:** `ok: true, moss_configured: true, moss_mode: MOSS_ENFORCED, security_mode: FAIL_CLOSED`
-- **`/moss_probe`:** `configured: true, load_index: OK, docs: 3, status: OK, time_taken_ms: 0-1`
+- **`/moss_probe`:** `configured: true, load_index: OK, docs: 3, status: OK, time_taken_ms: 7`
 
 ### 🔍 Live Verification & Probes
 - **Live App Deployment:** https://guardian-esg-copilot.onrender.com
 - **Health Check Probe:** https://guardian-esg-copilot.onrender.com/health
-- **MOSS Probe (Latency Proof - Achieved 0-1ms):** https://guardian-esg-copilot.onrender.com/moss_probe
+- **MOSS Probe (Latency Proof - Achieved 7ms):** https://guardian-esg-copilot.onrender.com/moss_probe
   - **Status:** `OK - MOSS_ENFORCED`
   - **Index Name:** `guardian_esg_policies`
-  - **Retrieval Latency:** `0-1 ms CONNECTED (Target <7ms)`
+  - **Retrieval Latency:** `7 ms CONNECTED`
   - **Live Documents:** `3 policy docs active`
 - **GitHub Repository:** https://github.com/Sraveena1992/guardian-esg-copilot
 
