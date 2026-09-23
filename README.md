@@ -5,7 +5,7 @@
 ### Final Demo
 - **Loom Video Walkthrough:** https://www.loom.com/share/ebf6fce7eca947c3ab48951413ad09f1
 
-### ✅ Live Verification — ACTIVE (22-09-2026)
+### ✅ Live Verification — ACTIVE (23-09-2026)
 - **`/health`:** `ok: true, moss_configured: true, moss_mode: MOSS_ENFORCED, security_mode: FAIL_CLOSED`
 - **`/moss_probe`:** `configured: true, load_index: OK, docs: 3, status: OK, time_taken_ms: 0-1`
 
